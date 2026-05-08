@@ -7,6 +7,12 @@ MarisGuard is a multi-feature Paper/Folia guard plugin that currently bundles:
 - MarisEsp
 - Player visibility raytrace protection
 
+## Wiki
+
+Detailed usage and config notes live here:
+
+- [docs/WIKI.md](docs/WIKI.md)
+
 ## Project layout
 
 This repository is being migrated toward a public-source multi-module layout:
