@@ -8,5 +8,6 @@ dependencies {
     implementation project(':api')
     compileOnly 'io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT'
     compileOnly 'com.mojang:datafixerupper:9.0.19'
+    compileOnly 'io.netty:netty-transport:4.2.7.Final'
     compileOnly files(rootProject.file('libs/paper-server-1.21.11-R0.1-SNAPSHOT-mojang-mapped.jar'))
 }

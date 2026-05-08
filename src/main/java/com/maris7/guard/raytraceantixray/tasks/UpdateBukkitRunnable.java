@@ -7,7 +7,6 @@ import java.util.function.Consumer;
 import org.bukkit.World;
 import org.bukkit.World.Environment;
 import org.bukkit.craftbukkit.CraftWorld;
-import org.bukkit.craftbukkit.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -18,14 +17,12 @@ import com.maris7.guard.raytraceantixray.data.PlayerData;
 import com.maris7.guard.raytraceantixray.data.Result;
 import com.maris7.guard.raytraceantixray.data.VectorialLocation;
 
-import io.netty.channel.Channel;
 import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockUpdatePacket;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -134,41 +131,15 @@ public final class UpdateBukkitRunnable extends BukkitRunnable implements Consum
             // We bypass the packet queue since our calculations are based on the packet state (not the server state) as seen by the packet listener.
             // As described above, the packet queue could for example already contain a chunk unload packet.
             // Thus we send our packet immediately before that.
-            sendPacketImmediately(player, new ClientboundBlockUpdatePacket(block, blockState));
+            plugin.getRayTracePacketBridge().sendPacketImmediately(player, new ClientboundBlockUpdatePacket(block, blockState));
 
             if (blockEntity != null) {
                 Packet<ClientGamePacketListener> packet = blockEntity.getUpdatePacket();
 
                 if (packet != null) {
-                    sendPacketImmediately(player, packet);
+                    plugin.getRayTracePacketBridge().sendPacketImmediately(player, packet);
                 }
             }
         }
     }
-
-    private static boolean sendPacketImmediately(Player player, Object packet) {
-        ServerGamePacketListenerImpl connection = ((CraftPlayer) player).getHandle().connection;
-
-        if (connection == null || connection.isDisconnected()) {
-            return false;
-        }
-
-        Channel channel = connection.connection.channel;
-
-        if (channel == null || !channel.isOpen()) {
-            return false;
-        }
-
-        if (channel.eventLoop().inEventLoop()) {
-            channel.writeAndFlush(packet);
-        } else {
-            channel.eventLoop().execute(() -> {
-                if (channel.isOpen()) {
-                    channel.writeAndFlush(packet);
-                }
-            });
-        }
-        return true;
-    }
 }
-

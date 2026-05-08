@@ -27,11 +27,13 @@ import com.maris7.guard.loadingscreenremover.PlayerManager;
 import com.maris7.guard.playertrace.NoopPlayerVisibilityPacketBridge;
 import com.maris7.guard.playertrace.PlayerVisibilityPacketBridge;
 import com.maris7.guard.playertrace.PlayerVisibilityRaytraceService;
+import com.maris7.guard.raytraceantixray.NoopRayTracePacketBridge;
 import com.maris7.guard.raytraceantixray.antixray.ChunkPacketBlockControllerAntiXray;
 import com.maris7.guard.raytraceantixray.commands.RayTraceAntiXrayTabExecutor;
 import com.maris7.guard.raytraceantixray.data.ChunkBlocks;
 import com.maris7.guard.raytraceantixray.data.ChunkPacketKey;
 import com.maris7.guard.raytraceantixray.data.PlayerData;
+import com.maris7.guard.raytraceantixray.RayTracePacketBridge;
 import com.maris7.guard.raytraceantixray.data.VectorialLocation;
 import com.maris7.guard.raytraceantixray.listeners.PacketListener;
 import com.maris7.guard.raytraceantixray.listeners.WorldListener;
@@ -100,6 +102,7 @@ public final class MarisGuard extends JavaPlugin {
     private BaseTemplate baseTemplate;
     private PlayerVisibilityRaytraceService playerVisibilityRaytraceService;
     private PlayerVisibilityPacketBridge playerVisibilityPacketBridge;
+    private RayTracePacketBridge rayTracePacketBridge;
 
     @Override
     public void onEnable() {
@@ -134,6 +137,7 @@ public final class MarisGuard extends JavaPlugin {
     }
 
     private void enableRayTraceAntiXray() {
+        this.rayTracePacketBridge = createRayTracePacketBridge();
         FileConfiguration config = getConfig();
         config.options().copyDefaults(true);
         try {
@@ -249,6 +253,29 @@ public final class MarisGuard extends JavaPlugin {
         return new NoopPlayerVisibilityPacketBridge();
     }
 
+    private RayTracePacketBridge createRayTracePacketBridge() {
+        String[] bridgeClassNames = {
+                "com.maris7.guard.nms.v26_1_2.raytraceantixray.V26_1_2RayTracePacketBridge",
+                "com.maris7.guard.nms.v1_21.raytraceantixray.V1_21RayTracePacketBridge",
+                "com.maris7.guard.nms.v1_20.raytraceantixray.V1_20RayTracePacketBridge"
+        };
+
+        for (String className : bridgeClassNames) {
+            try {
+                Class<?> bridgeClass = Class.forName(className);
+                Object instance = bridgeClass.getDeclaredConstructor().newInstance();
+                if (instance instanceof RayTracePacketBridge bridge) {
+                    getLogger().info("[RayTraceAntiXray] Using packet bridge " + className);
+                    return bridge;
+                }
+            } catch (ReflectiveOperationException ignored) {
+            }
+        }
+
+        getLogger().warning("[RayTraceAntiXray] No version-specific packet bridge found. Falling back to no-op bridge.");
+        return new NoopRayTracePacketBridge();
+    }
+
     private void disableMarisEsp() {
         if (esperManager != null) esperManager.stop();
         if (revealService != null) revealService.stop();
@@ -298,6 +325,7 @@ public final class MarisGuard extends JavaPlugin {
         } catch (Throwable t) {
             if (throwable == null) throwable = t; else throwable.addSuppressed(t);
         } finally {
+            rayTracePacketBridge = null;
             if (throwable != null) {
                 Throwables.throwIfUnchecked(throwable);
                 throw new RuntimeException(throwable);
@@ -378,6 +406,7 @@ public final class MarisGuard extends JavaPlugin {
     public ViolationStorage getViolationStorage() { return violationStorage; }
     public BaseTemplate getBaseTemplate() { return baseTemplate; }
     public PlayerVisibilityPacketBridge getPlayerVisibilityPacketBridge() { return playerVisibilityPacketBridge; }
+    public RayTracePacketBridge getRayTracePacketBridge() { return rayTracePacketBridge; }
 
     public boolean isEnabled(World world) {
         if (world == null) {
