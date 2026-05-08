@@ -1,0 +1,31 @@
+name: MarisGuard
+version: '1.0'
+author: maris7
+main: com.maris7.guard.MarisGuard
+api-version: '1.21'
+description: Combined guard plugin containing LoadingScreenRemover, RayTraceAntiXray, MarisEsp, and player visibility protection.
+load: STARTUP
+folia-supported: true
+depend:
+  - packetevents
+libraries:
+  - com.zaxxer:HikariCP:7.0.2
+  - org.xerial:sqlite-jdbc:3.53.0.0
+  - com.mysql:mysql-connector-j:9.7.0
+commands:
+  raytraceantixray:
+    description: RayTraceAntiXray admin command.
+    usage: /raytraceantixray <reload|stats|timings>
+    permission: raytraceantixray.command.raytraceantixray
+    permission-message: You do not have permissions.
+  esper:
+    description: Open ESPER menu and manage ESPER checks
+    usage: /esper
+    permission: antiesp.esper
+permissions:
+  antiesp.esper:
+    default: op
+  esper.alerts:
+    default: op
+  raytraceantixray.command.raytraceantixray:
+    default: op

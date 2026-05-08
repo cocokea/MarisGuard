@@ -1,0 +1,19 @@
+esper:
+  enabled: true
+  punishable: true
+  punishment-delay-in-seconds: 0
+  max-violations: 7
+  punishment-commands:
+    - 'tempban %player% 30m use esp'
+  duration-seconds: 15
+  spawn-distance: 10.5
+  forward-offset: 2.0
+  trigger-distance: 2.0
+  auto-check:
+    enabled: true
+    interval-ticks: 40
+    max-players-per-cycle: 3
+    cooldown-seconds: 60
+    max-active-sessions: 8
+    require-survival: true
+    max-y: 29

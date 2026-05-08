@@ -1,0 +1,72 @@
+ext {
+    targetConfig = [
+            paperApiCoordinate: null,
+            mappedServerJar   : null,
+            archiveSuffix     : '',
+            runtimeModule     : null,
+            javaRelease       : 21
+    ]
+}
+
+dependencies {
+    compileOnly 'com.mojang:datafixerupper:9.0.19'
+    compileOnly 'io.netty:netty-transport:4.2.7.Final'
+    compileOnly 'com.github.retrooper:packetevents-spigot:2.12.1'
+    compileOnly 'com.zaxxer:HikariCP:7.0.2'
+    compileOnly 'org.xerial:sqlite-jdbc:3.53.0.0'
+    compileOnly 'com.mysql:mysql-connector-j:9.7.0'
+    compileOnly 'org.projectlombok:lombok:1.18.42'
+    annotationProcessor 'org.projectlombok:lombok:1.18.42'
+    implementation 'com.github.Anon8281:UniversalScheduler:0.1.6'
+}
+
+afterEvaluate {
+    if (!targetConfig.paperApiCoordinate) {
+        throw new GradleException('paperApiCoordinate was not configured by the selected target script.')
+    }
+
+    dependencies.add('compileOnly', targetConfig.paperApiCoordinate)
+
+    if (targetConfig.mappedServerJar) {
+        File mappedJar = rootProject.file(targetConfig.mappedServerJar)
+        if (!mappedJar.exists()) {
+            throw new GradleException("Missing mapped server jar for target '${rootProject.ext.marisTarget}': ${mappedJar}")
+        }
+        dependencies.add('compileOnly', files(mappedJar))
+    }
+}
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(targetConfig.javaRelease)
+    sourceCompatibility = JavaVersion.toVersion(targetConfig.javaRelease)
+    targetCompatibility = JavaVersion.toVersion(targetConfig.javaRelease)
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release.set(targetConfig.javaRelease)
+}
+
+processResources {
+    def props = [version: project.version]
+    inputs.properties props
+    filteringCharset = 'UTF-8'
+    filesMatching('plugin.yml') { expand props }
+}
+
+jar {
+    archiveClassifier.set('plain')
+    manifest { attributes('paperweight-mappings-namespace': 'mojang') }
+}
+
+shadowJar {
+    archiveClassifier.set('')
+    archiveFileName.set(targetConfig.archiveSuffix ? "MarisGuard-${targetConfig.archiveSuffix}.jar" : 'MarisGuard.jar')
+    manifest { attributes('paperweight-mappings-namespace': 'mojang') }
+    relocate('com.github.Anon8281.universalScheduler', 'com.maris7.guard.libraries.universalScheduler')
+    exclude 'assets/**'
+}
+
+tasks.build {
+    dependsOn shadowJar
+}

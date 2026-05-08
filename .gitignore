@@ -1,0 +1,18 @@
+.gradle/
+build/
+core/build/
+nms-v1_20/build/
+nms-v1_21/build/
+nms-v26_1_2/build/
+out/
+.idea/
+*.iml
+*.class
+*.log
+*.tmp
+hs_err_pid*
+replay_pid*
+
+# Local jars
+libs/*.jar
+!libs/.gitkeep

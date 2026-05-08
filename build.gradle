@@ -1,0 +1,49 @@
+group = 'com.maris7'
+version = '1.0'
+
+ext {
+    marisTarget = (findProperty('marisTarget') ?: 'paper-26_1_2').toString()
+}
+
+subprojects {
+    apply plugin: 'java'
+
+    group = rootProject.group
+    version = rootProject.version
+
+    repositories {
+        mavenCentral()
+        maven { url = uri('https://repo.papermc.io/repository/maven-public/') }
+        maven { url = uri('https://repo.codemc.io/repository/maven-releases/') }
+        maven { url = uri('https://repo.codemc.io/repository/maven-snapshots/') }
+        maven { url = uri('https://libraries.minecraft.net/') }
+        maven { url = uri('https://jitpack.io') }
+    }
+
+    configurations.configureEach {
+        resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+    }
+
+    java {
+        toolchain.languageVersion = JavaLanguageVersion.of(21)
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
+    }
+
+    tasks.withType(JavaCompile).configureEach {
+        options.encoding = 'UTF-8'
+        options.release.set(21)
+    }
+}
+
+tasks.register('buildPaper26_1_2') {
+    dependsOn ':core:shadowJar'
+}
+
+tasks.register('buildPaper1_21') {
+    dependsOn ':core:compileJava'
+}
+
+tasks.register('buildPaper1_20') {
+    dependsOn ':core:compileJava'
+}

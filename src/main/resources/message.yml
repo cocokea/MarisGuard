@@ -1,0 +1,18 @@
+prefix: '&#FFB347AntiESP &8Â» '
+command:
+  usage: '%prefix%&#FF6B6BUsage: /esper, /esper check <player>, /esper reset <player>, /esper alerts'
+  player-not-found: '%prefix%&#FF6B6BPlayer not found or offline.'
+  target-offline: '%prefix%&#FF6B6BTarget is not online.'
+  reset-success: '%prefix%&#7CFC00Reset ESPER VL for &f%player%&a.'
+esper:
+  disabled: '%prefix%&#FF6B6BESPER check is disabled in checks.yml.'
+  blacklisted-world: '%prefix%&#FF6B6BCannot run ESPER for &f%player% &7in a blacklisted world.'
+  create-failed: '%prefix%&#FF6B6BCould not create virtual base for &f%player%&#FF6B6B.'
+  started: '%prefix%&#7CFC00Started ESPER check for &f%player%&a.'
+  failed-alert: '&#FFD166[AntiESP] &f%player% &7failed ESPER VL [&6%current_vl%&7/&6%max_vl%&7]'
+alerts:
+  no-permission: '%prefix%&#FF6B6BYou do not have permission to view ESPER alerts.'
+  enabled: '%prefix%&#7CFC00Alerts enabled.'
+  disabled: '%prefix%&#FF6B6BAlerts disabled.'
+  console-enabled: '%prefix%&#7CFC00Console alerts enabled.'
+  console-disabled: '%prefix%&#FF6B6BConsole alerts disabled.'

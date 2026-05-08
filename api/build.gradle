@@ -1,0 +1,9 @@
+plugins {
+    id 'java-library'
+}
+
+description = 'Shared API contracts for MarisGuard multi-version modules'
+
+dependencies {
+    compileOnly 'io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT'
+}

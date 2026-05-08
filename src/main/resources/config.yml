@@ -1,0 +1,91 @@
+# LoadingScreenRemover
+debug: false
+track-ticks: 80
+# Keep death respawn packets allowed longer than normal world-change tracking.
+# This prevents the client from getting stuck on the respawn screen when extra RESPAWN packets are sent.
+death-bypass-ticks: 200
+aggressive-same-environment: true
+
+# RayTraceAntiXray
+settings:
+  anti-xray:
+    update-ticks: 4
+    ms-per-ray-trace-tick: 75
+    ray-trace-threads: 2
+world-settings:
+  default:
+    anti-xray:
+      ray-trace: true
+      ray-trace-third-person: false
+      ray-trace-distance: 32.0
+      rehide-blocks: false
+      rehide-distance: .inf
+      max-ray-trace-block-count-per-chunk: 24
+      ray-trace-blocks: []
+  world_the_end:
+    anti-xray:
+      ray-trace: false
+  spawn:
+    anti-xray:
+      ray-trace: false
+  afk:
+    anti-xray:
+      ray-trace: false
+  duels:
+    anti-xray:
+      ray-trace: false
+# MarisEsp
+reveal-radius: 30
+refresh-period-ticks: 10
+mask-material: AIR
+blacklist-worlds:
+  - world_the_end
+  - spawn
+  - afk
+  - duels
+storage:
+  type: sqlite
+  sqlite:
+    file: violations.db
+  mysql:
+    host: 127.0.0.1
+    port: 3306
+    database: antiesp
+    username: root
+    password: ''
+    properties: useSSL=false&characterEncoding=utf8&serverTimezone=UTC
+  pool:
+    maximum-pool-size: 4
+    minimum-idle: 1
+    connection-timeout-ms: 10000
+esper:
+  enabled: true
+  punishable: true
+  punishment-delay-in-seconds: 0
+  max-violations: 7
+  punishment-commands:
+    - 'tempban %player% 30m use esp'
+  duration-seconds: 15
+  spawn-distance: 10.5
+  forward-offset: 2.0
+  trigger-distance: 2.0
+  auto-check:
+    enabled: true
+    interval-ticks: 60
+    max-players-per-cycle: 2
+    cooldown-seconds: 90
+    max-active-sessions: 4
+    require-survival: true
+    max-y: 29
+
+# Player raytrace visibility
+# Hides player entity packets client-side when all sampled rays are blocked.
+# This does not call hidePlayer/hideEntity and does not remove players from tablist.
+player-visibility-raytrace:
+  enabled: true
+  worlds:
+    - world
+  max-distance: 24.0
+  check-period-ticks: 20
+  max-targets-per-tick: 2
+  candidate-refresh-ticks: 10

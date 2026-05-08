@@ -1,0 +1,12 @@
+plugins {
+    id 'java-library'
+}
+
+description = 'Version-specific adapter module for MarisGuard on Paper 1.21.x'
+
+dependencies {
+    implementation project(':api')
+    compileOnly 'io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT'
+    compileOnly 'com.mojang:datafixerupper:9.0.19'
+    compileOnly files(rootProject.file('libs/paper-server-1.21.11-R0.1-SNAPSHOT-mojang-mapped.jar'))
+}

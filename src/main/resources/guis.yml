@@ -1,0 +1,62 @@
+rtp:
+  rows: 3
+  title: "&8ʀᴀɴᴅᴏᴍ ᴛᴇʟᴇᴘᴏʀᴛ "
+  items:
+    overworld:
+      slot: 11
+      material: GRASS_BLOCK
+      name: "&#00FF83ᴏᴠᴇʀᴡᴏʀʟᴅ"
+      lore:
+        - "&fClick to randomly teleport"
+        - ""
+        - "&7Players (&#FFEE00%online_overworld%&7)"
+    nether:
+      slot: 13
+      material: NETHERRACK
+      name: "&#00FF83ɴᴇᴛʜᴇʀ"
+      lore:
+        - "&fClick to randomly teleport"
+        - ""
+        - "&7Players (&#FFEE00%online_nether%&7)"
+    end:
+      slot: 15
+      material: END_STONE
+      name: "&#00FF83ᴇɴᴅ"
+      lore:
+        - "&fClick to randomly teleport"
+        - ""
+        - "&7Players (&#FFEE00%online_end%&7)"
+queue:
+  rows: 3
+  title: "&8RTP Queue"
+  items:
+    leave:
+      slot: 10
+      material: RED_STAINED_GLASS_PANE
+      name: "&#FF0000Leave queue"
+      lore:
+        - "&fClick to leave"
+    world:
+      slot: 12
+      material: GRASS_BLOCK
+      name: "&#F1FF00World"
+      lore:
+        - "&7%queue-world%"
+    queue:
+      slot: 13
+      material: COMPASS
+      name: "&#FF0000Queue players"
+      lore:
+        - "&7Queue %queue%/2"
+    ping:
+      slot: 14
+      material: FEATHER
+      name: "&#F1FF00Ping"
+      lore:
+        - "&7%ping%ms"
+    search:
+      slot: 16
+      material: LIME_STAINED_GLASS_PANE
+      name: "&#00F986Find match"
+      lore:
+        - "&fClick to search opponent"
