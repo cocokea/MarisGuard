@@ -41,6 +41,8 @@ If the plugin is already stable on the server, these values usually do not need 
 
 This is the raytrace-based anti-xray system. It does not work like a basic block obfuscator. Instead, it decides which blocks should be visible to the client based on visibility and line-of-sight logic.
 
+Important: Paper anti-xray must still be enabled with `engine-mode: 1` in the Paper world config. If Paper anti-xray is disabled or set to a different mode, this part will not behave correctly.
+
 Global config:
 
 ```yml
@@ -86,6 +88,17 @@ If ore or hidden blocks feel too slow to reveal, the first places to inspect are
 - `ray-trace-distance`
 - `update-ticks`
 - `ms-per-ray-trace-tick`
+
+Paper-side requirement:
+
+```yml
+anticheat:
+  anti-xray:
+    enabled: true
+    engine-mode: 1
+```
+
+Exact path names can vary a bit between builds and forks, but the important part is the same: Paper anti-xray must be on, and `engine-mode` must be `1`.
 
 ### 3. MarisEsp
 
