@@ -40,6 +40,7 @@ import com.maris7.guard.raytraceantixray.listeners.WorldListener;
 import com.maris7.guard.raytraceantixray.tasks.RayTraceCallable;
 import com.maris7.guard.raytraceantixray.tasks.RayTraceTimerTask;
 import com.maris7.guard.raytraceantixray.tasks.UpdateBukkitRunnable;
+import com.maris7.guard.update.GitHubVersionChecker;
 
 import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import com.maris7.guard.util.WorldNameMatcher;
@@ -111,6 +112,9 @@ public final class MarisGuard extends JavaPlugin {
         enableRayTraceAntiXray();
         enableMarisEsp();
         enablePlayerVisibilityRaytrace();
+        if (isEnabled()) {
+            new GitHubVersionChecker(this).checkAsync();
+        }
     }
 
     @Override
