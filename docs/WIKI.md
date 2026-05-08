@@ -1,25 +1,25 @@
 # MarisGuard Wiki
 
-Trang này viết theo hướng dùng thật, không phải giới thiệu cho đẹp. Nếu anh chỉ cần biết plugin đang làm gì, cấu hình ở đâu và nên chỉnh cái gì trước, đọc trang này là đủ.
+This page is written as an actual usage reference. The goal is to explain what each part of the plugin does, where the important config lives, and which settings matter first in real server use.
 
-## MarisGuard hiện có gì
+## What MarisGuard currently includes
 
-MarisGuard hiện đang gộp 4 phần:
+MarisGuard currently bundles four parts:
 
 - `LoadingScreenRemover`
 - `RayTraceAntiXray`
 - `MarisEsp`
 - `Player Visibility Raytrace`
 
-Nó không còn `AntiFreeCam` nữa. Phần đó đã bị gỡ khỏi code và khỏi config.
+`AntiFreeCam` is no longer part of the plugin. It was removed from both code and config.
 
-## Plugin này dùng để làm gì
+## What each part is for
 
 ### 1. LoadingScreenRemover
 
-Phần này giảm tình trạng client bị kẹt ở màn hình loading terrain khi đổi world hoặc khi server gửi thêm packet `RESPAWN` trong mấy case nhạy cảm.
+This part reduces client-side loading terrain issues when players change worlds or when the server sends extra `RESPAWN` packets in sensitive cases.
 
-Config liên quan:
+Relevant config:
 
 ```yml
 debug: false
@@ -28,20 +28,20 @@ death-bypass-ticks: 200
 aggressive-same-environment: true
 ```
 
-Ý nghĩa ngắn:
+Short meaning:
 
-- `debug`: bật log debug. Chỉ nên bật khi đang soi lỗi.
-- `track-ticks`: thời gian plugin theo dõi thay đổi world.
-- `death-bypass-ticks`: nới thời gian bypass cho lúc chết rồi respawn.
-- `aggressive-same-environment`: xử lý mạnh tay hơn với các lần đổi world mà environment giống nhau.
+- `debug`: enables debug logging. Only useful while diagnosing issues.
+- `track-ticks`: how long world-change tracking stays active.
+- `death-bypass-ticks`: keeps death respawn bypass active longer.
+- `aggressive-same-environment`: handles same-environment world changes more aggressively.
 
-Nếu server đang ổn thì để nguyên mấy giá trị này.
+If the plugin is already stable on the server, these values usually do not need frequent changes.
 
 ### 2. RayTraceAntiXray
 
-Đây là phần anti-xray kiểu raytrace. Nó không phải kiểu obfuscate block đơn giản, mà sẽ quyết định block nào nên lộ cho client dựa trên line-of-sight.
+This is the raytrace-based anti-xray system. It does not work like a basic block obfuscator. Instead, it decides which blocks should be visible to the client based on visibility and line-of-sight logic.
 
-Config tổng:
+Global config:
 
 ```yml
 settings:
@@ -51,15 +51,15 @@ settings:
     ray-trace-threads: 2
 ```
 
-Ý nghĩa:
+Meaning:
 
-- `update-ticks`: chu kỳ update.
-- `ms-per-ray-trace-tick`: thời gian giữa các đợt raytrace.
-- `ray-trace-threads`: số worker xử lý raytrace.
+- `update-ticks`: update interval.
+- `ms-per-ray-trace-tick`: spacing between raytrace passes.
+- `ray-trace-threads`: worker count for raytrace tasks.
 
-Nếu ưu tiên mượt server thì đừng tăng bừa `ray-trace-threads`. Với Folia và server đông người, tăng thread không phải lúc nào cũng tốt.
+If server smoothness matters more than aggressive checking, avoid raising `ray-trace-threads` without profiling first. More threads are not automatically better on Folia.
 
-Config theo world:
+Per-world config:
 
 ```yml
 world-settings:
@@ -74,14 +74,14 @@ world-settings:
       ray-trace-blocks: []
 ```
 
-Mấy dòng cần quan tâm:
+Main lines to care about:
 
-- `ray-trace`: bật tắt anti-xray ở world đó.
-- `ray-trace-distance`: khoảng cách raytrace block.
-- `ray-trace-third-person`: có trace thêm góc nhìn third person hay không.
-- `max-ray-trace-block-count-per-chunk`: giới hạn số block xử lý trong mỗi chunk.
+- `ray-trace`: enables or disables anti-xray in that world.
+- `ray-trace-distance`: how far raytrace visibility checks go.
+- `ray-trace-third-person`: whether third-person view points are included.
+- `max-ray-trace-block-count-per-chunk`: how many blocks are processed per chunk.
 
-Nếu cảm giác block hiện quá chậm thì thường nhìn trước vào:
+If ore or hidden blocks feel too slow to reveal, the first places to inspect are:
 
 - `ray-trace-distance`
 - `update-ticks`
@@ -89,9 +89,9 @@ Nếu cảm giác block hiện quá chậm thì thường nhìn trước vào:
 
 ### 3. MarisEsp
 
-Phần này xử lý block masking và mấy phiên bait check để bắt ESP.
+This handles masked-block reveal logic and the bait-check system used to catch ESP users.
 
-Config chính:
+Main config:
 
 ```yml
 reveal-radius: 30
@@ -99,18 +99,18 @@ refresh-period-ticks: 10
 mask-material: AIR
 ```
 
-Ý nghĩa:
+Meaning:
 
-- `reveal-radius`: bán kính lộ block quanh người chơi.
-- `refresh-period-ticks`: tốc độ refresh vùng reveal.
-- `mask-material`: block dùng để che phía client. Hiện tại để `AIR`.
+- `reveal-radius`: reveal radius around the player.
+- `refresh-period-ticks`: how often the reveal area refreshes.
+- `mask-material`: client-side replacement material. It is currently `AIR`.
 
-Nếu muốn block lộ nhanh hơn khi người chơi tiến gần:
+If blocks should reveal faster when players get close:
 
-- tăng `reveal-radius`
-- giảm `refresh-period-ticks`
+- increase `reveal-radius`
+- reduce `refresh-period-ticks`
 
-Blacklist world:
+Blacklist worlds:
 
 ```yml
 blacklist-worlds:
@@ -120,11 +120,11 @@ blacklist-worlds:
   - duels
 ```
 
-World nằm trong đây sẽ bị tắt anti-ESP / anti-xray tương ứng theo logic hiện tại.
+Worlds listed here are excluded from the anti-ESP / anti-xray logic covered by the current implementation.
 
 ### 4. ESP auto-check
 
-Phần này dùng bait entity / session check để bắt người chơi đang dùng ESP.
+This part runs bait sessions used to catch players who are actually using ESP.
 
 Config:
 
@@ -150,17 +150,17 @@ esper:
     max-y: 29
 ```
 
-Nên chú ý:
+The most performance-sensitive lines here are:
 
 - `max-players-per-cycle`
 - `max-active-sessions`
 - `interval-ticks`
 
-Ba dòng này ảnh hưởng khá rõ tới tải server. Nếu server đông người mà muốn an toàn hơn thì giảm số session song song trước.
+If the server is busy and these checks feel too aggressive, reduce concurrent sessions before changing the punishment logic.
 
 ### 5. Player Visibility Raytrace
 
-Phần này không liên quan tới tablist. Nó chỉ chặn việc client thấy entity player khi mọi tia nhìn đều bị block cản.
+This part does not touch the tablist. It only hides player entity packets client-side when all sampled visibility rays are blocked.
 
 Config:
 
@@ -175,21 +175,21 @@ player-visibility-raytrace:
   candidate-refresh-ticks: 10
 ```
 
-Ý nghĩa:
+Meaning:
 
-- `worlds`: chỉ chạy ở các world này.
-- `max-distance`: bán kính tối đa để xét hide/show player.
-- `check-period-ticks`: chu kỳ check.
-- `max-targets-per-tick`: giới hạn số target xử lý mỗi tick.
-- `candidate-refresh-ticks`: chu kỳ refresh candidate list.
+- `worlds`: worlds where this system is active.
+- `max-distance`: maximum range used for player visibility checks.
+- `check-period-ticks`: main check interval.
+- `max-targets-per-tick`: processing cap per tick.
+- `candidate-refresh-ticks`: how often candidate lists refresh.
 
-Ví dụ `max-distance: 24.0` có nghĩa là chỉ các player trong phạm vi 24 block mới bị đưa vào luồng xét raytrace này.
+Example: `max-distance: 24.0` means only players within 24 blocks are considered by this visibility system.
 
-Phần này hiện cũng có chặn player tàng hình. Nếu target đang invisible hoặc viewer không `canSee(target)` thì MarisGuard sẽ không cố lộ entity đó nữa.
+This part also respects invisibility now. If the target is invisible or `viewer.canSee(target)` is false, MarisGuard does not force that player visible again through this path.
 
 ## Storage
 
-Violation storage của phần ESP hiện hỗ trợ:
+ESP violation storage currently supports:
 
 - `sqlite`
 - `mysql`
@@ -214,42 +214,42 @@ storage:
     connection-timeout-ms: 10000
 ```
 
-Nếu chỉ chạy một server nhỏ hoặc vừa thì `sqlite` là đủ. Nếu muốn đồng bộ hoặc kiểm soát DB riêng thì mới chuyển sang `mysql`.
+For a small or medium setup, `sqlite` is usually enough. `mysql` only becomes necessary if external database control or shared storage is actually needed.
 
-## Cấu hình gợi ý
+## Suggested tuning
 
-### Nếu ưu tiên mượt server
+### If server smoothness is the priority
 
-- giữ `ray-trace-threads: 2`
-- giữ `ms-per-ray-trace-tick` tương đối cao
-- không tăng `max-active-sessions` bừa
-- hạn chế world chạy `player-visibility-raytrace`
+- keep `ray-trace-threads: 2`
+- keep `ms-per-ray-trace-tick` relatively conservative
+- avoid pushing `max-active-sessions` too high
+- limit the worlds using `player-visibility-raytrace`
 
-### Nếu ưu tiên phát hiện nhanh hơn
+### If faster detection is the priority
 
-- tăng `reveal-radius`
-- giảm `refresh-period-ticks`
-- tăng `player-visibility-raytrace.max-distance`
-- giảm `check-period-ticks`
+- increase `reveal-radius`
+- reduce `refresh-period-ticks`
+- increase `player-visibility-raytrace.max-distance`
+- reduce `check-period-ticks`
 
-Đổi lại, CPU và packet cost sẽ tăng. Cái này không có cấu hình “vừa mạnh vừa miễn phí”.
+That comes with a clear CPU and packet cost. There is no configuration that is both aggressive and free.
 
-## Version check khi khởi động
+## Version check on startup
 
-Lúc plugin enable xong, MarisGuard sẽ check release mới nhất từ GitHub repo:
+After the plugin enables successfully, MarisGuard checks the latest GitHub release:
 
-- nếu đang là bản mới nhất:
+- if the running version is current:
   - `You are currently using the latest version (x.x.x)`
-- nếu có bản mới hơn:
+- if a newer release exists:
   - `The new version has been released (x.x.x)`
-- nếu check lỗi:
+- if the check fails:
   - `Unable to check for the new version.`
 
-Phần này chỉ log ngắn, không in stacktrace dài.
+This check is intentionally quiet. It does not print long stack traces.
 
-## Build
+## Build targets
 
-Repo đang được tách dần theo kiểu đa version:
+The repository is being split into a version-aware structure:
 
 - `api/`
 - `core/`
@@ -257,7 +257,7 @@ Repo đang được tách dần theo kiểu đa version:
 - `nms-v1_21/`
 - `nms-v26_1_2/`
 
-Build:
+Build commands:
 
 ```powershell
 ./gradlew :core:build "-PmarisTarget=paper-1.20"
@@ -265,21 +265,21 @@ Build:
 ./gradlew :core:build "-PmarisTarget=paper-26_1_2"
 ```
 
-Artifact hiện đang phát hành theo tên:
+Current release artifact name:
 
 ```text
 MarisGuard-1.0.jar
 ```
 
-## Tình trạng hiện tại của source
+## Current source state
 
-Repo đã tách được một phần bridge version-specific, nhưng chưa xong hoàn toàn. `playertrace` và một phần `raytrace packet send` đã có bridge riêng. Một số chỗ NMS lớn hơn vẫn đang được kéo dần ra khỏi `core`.
+The repository already has version-specific bridges for part of the packet handling, but the migration is not finished yet. `playertrace` and part of `raytrace packet sending` already use dedicated bridges. Larger NMS-heavy sections are still being moved out of `core`.
 
-Nói ngắn: repo đã đi đúng hướng, nhưng chưa phải dạng “đa version hoàn toàn sạch” ở mọi module.
+In short: the repository is on the right path, but it is not yet a fully clean multi-version split across every subsystem.
 
-## Nếu cần bắt đầu chỉnh config thì nên sửa gì trước
+## Practical config order
 
-Thứ tự thực dụng:
+If config tuning has to start somewhere, the most useful order is:
 
 1. `blacklist-worlds`
 2. `world-settings.<world>.anti-xray.ray-trace`
@@ -289,4 +289,4 @@ Thứ tự thực dụng:
 6. `player-visibility-raytrace.max-distance`
 7. `esper.auto-check.*`
 
-Đó là mấy dòng dễ tạo khác biệt rõ nhất.
+Those are the settings that usually change runtime behavior the most.
