@@ -134,9 +134,6 @@ public final class MarisGuard extends JavaPlugin {
     }
 
     private void enableRayTraceAntiXray() {
-        if (!new File(getDataFolder(), "README.txt").exists()) {
-            saveResource("README.txt", false);
-        }
         FileConfiguration config = getConfig();
         config.options().copyDefaults(true);
         try {
