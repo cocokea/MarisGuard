@@ -1,4 +1,4 @@
-# LoadingScreenRemover
+# ===== LoadingScreenRemover =====
 debug: false
 track-ticks: 80
 # Keep death respawn packets allowed longer than normal world-change tracking.
@@ -6,12 +6,14 @@ track-ticks: 80
 death-bypass-ticks: 200
 aggressive-same-environment: true
 
-# RayTraceAntiXray
+# ===== RayTraceAntiXray =====
 settings:
   anti-xray:
     update-ticks: 4
     ms-per-ray-trace-tick: 75
     ray-trace-threads: 2
+
+# Per-world anti-xray toggles and raytrace tuning.
 world-settings:
   default:
     anti-xray:
@@ -34,15 +36,22 @@ world-settings:
   duels:
     anti-xray:
       ray-trace: false
-# MarisEsp
+
+# ===== MarisEsp =====
+# Nearby reveal radius for masked blocks around the player.
 reveal-radius: 30
+# How often masked block visibility refreshes, in ticks.
 refresh-period-ticks: 10
 mask-material: AIR
+
+# Worlds where anti-ESP and anti-xray behavior are disabled.
 blacklist-worlds:
   - world_the_end
   - spawn
   - afk
   - duels
+
+# Database backend for violation storage.
 storage:
   type: sqlite
   sqlite:
@@ -58,6 +67,8 @@ storage:
     maximum-pool-size: 4
     minimum-idle: 1
     connection-timeout-ms: 10000
+
+# Automated ESP bait checks and punishment flow.
 esper:
   enabled: true
   punishable: true
@@ -78,7 +89,7 @@ esper:
     require-survival: true
     max-y: 29
 
-# Player raytrace visibility
+# ===== Player Visibility Raytrace =====
 # Hides player entity packets client-side when all sampled rays are blocked.
 # This does not call hidePlayer/hideEntity and does not remove players from tablist.
 player-visibility-raytrace:

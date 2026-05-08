@@ -60,8 +60,12 @@ jar {
 }
 
 shadowJar {
+    archiveBaseName.set('MarisGuard')
+    archiveVersion.set(project.version.toString())
     archiveClassifier.set('')
-    archiveFileName.set(targetConfig.archiveSuffix ? "MarisGuard-${targetConfig.archiveSuffix}.jar" : 'MarisGuard.jar')
+    if (targetConfig.archiveSuffix) {
+        archiveClassifier.set(targetConfig.archiveSuffix)
+    }
     manifest { attributes('paperweight-mappings-namespace': 'mojang') }
     relocate('com.github.Anon8281.universalScheduler', 'com.maris7.guard.libraries.universalScheduler')
     exclude 'assets/**'
