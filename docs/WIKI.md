@@ -107,18 +107,20 @@ This handles masked-block reveal logic and the bait-check system used to catch E
 Main config:
 
 ```yml
-reveal-radius: 30
+reveal-radius: 64
 refresh-period-ticks: 10
 mask-material: AIR
 ```
 
 Meaning:
 
-- `reveal-radius`: reveal radius around the player.
+- `reveal-radius`: maximum reveal distance around the player.
 - `refresh-period-ticks`: how often the reveal area refreshes.
 - `mask-material`: client-side replacement material. It is currently `AIR`.
 
-If blocks should reveal faster when players get close:
+Reveal is no longer based on simple radius alone. A block now has to be inside the reveal distance and also pass a clear raytrace path from the player's eye position. In practice this makes the behavior closer to the player visibility raytrace logic instead of a plain sphere reveal.
+
+If blocks should reveal faster or more aggressively:
 
 - increase `reveal-radius`
 - reduce `refresh-period-ticks`
@@ -281,7 +283,7 @@ Build commands:
 Current release artifact name:
 
 ```text
-MarisGuard-1.0.jar
+MarisGuard-1.1.jar
 ```
 
 ## Current source state

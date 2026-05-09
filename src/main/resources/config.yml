@@ -38,8 +38,9 @@ world-settings:
       ray-trace: false
 
 # ===== MarisEsp =====
-# Nearby reveal radius for masked blocks around the player.
-reveal-radius: 30
+# Maximum distance used by MarisEsp masked-block reveal checks.
+# Reveal now also requires a clear raytrace path to the block.
+reveal-radius: 64
 # How often masked block visibility refreshes, in ticks.
 refresh-period-ticks: 10
 mask-material: AIR
