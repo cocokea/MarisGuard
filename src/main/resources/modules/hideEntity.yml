@@ -2,3 +2,38 @@ enabled: false
 distance: 20.0
 refresh-ticks: 20
 worlds: []
+entity-types:
+  - ZOMBIE
+  - CREEPER
+  - SKELETON
+  - SPIDER
+  - CAVE_SPIDER
+  - ENDERMAN
+  - WITCH
+  - SLIME
+  - MAGMA_CUBE
+  - SILVERFISH
+  - BLAZE
+  - GHAST
+  - PHANTOM
+  - DROWNED
+  - HUSK
+  - STRAY
+  - VEX
+  - VINDICATOR
+  - EVOKER
+  - RAVAGER
+  - PILLAGER
+  - COW
+  - PIG
+  - SHEEP
+  - CHICKEN
+  - SQUID
+  - GLOW_SQUID
+  - COD
+  - SALMON
+  - TROPICAL_FISH
+  - PUFFERFISH
+  - ITEM
+  - EXPERIENCE_ORB
+  - ARMOR_STAND

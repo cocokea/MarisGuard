@@ -6,10 +6,13 @@ import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 
 import java.io.File;
+import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -17,9 +20,13 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class HideEntityService {
+    private static final double MIN_SCAN_DISTANCE = 48.0D;
+    private static final double EXTRA_SCAN_PADDING = 16.0D;
+
     private final MarisGuard plugin;
     private final File file;
     private YamlConfiguration config;
+    private Set<EntityType> hiddenTypes = EnumSet.noneOf(EntityType.class);
     private final Map<UUID, Set<UUID>> hiddenEntityIds = new ConcurrentHashMap<>();
     private ScheduledTask foliaTask;
     private int bukkitTaskId = -1;
@@ -55,6 +62,7 @@ public final class HideEntityService {
 
     public void reload() {
         this.config = YamlConfiguration.loadConfiguration(file);
+        this.hiddenTypes = loadHiddenTypes();
     }
 
     private void tick() {
@@ -93,31 +101,43 @@ public final class HideEntityService {
 
     private void update(Player viewer) {
         double distance = Math.max(1.0D, config.getDouble("distance", 20.0D));
+        double scanDistance = Math.max(MIN_SCAN_DISTANCE, distance + EXTRA_SCAN_PADDING);
+        double maxDistanceSquared = distance * distance;
         Set<UUID> hidden = hiddenEntityIds.computeIfAbsent(viewer.getUniqueId(), ignored -> ConcurrentHashMap.newKeySet());
-        Set<UUID> stillHidden = new HashSet<>();
+        Set<UUID> scanned = new HashSet<>();
 
-        for (Entity nearby : viewer.getNearbyEntities(distance, distance, distance)) {
-            if (nearby instanceof Player || nearby == viewer) {
+        for (Entity nearby : viewer.getNearbyEntities(scanDistance, scanDistance, scanDistance)) {
+            if (shouldIgnore(viewer, nearby)) {
                 continue;
             }
-            stillHidden.add(nearby.getUniqueId());
+            scanned.add(nearby.getUniqueId());
+            if (isWithinDistance(viewer, nearby, maxDistanceSquared)) {
+                if (hidden.remove(nearby.getUniqueId())) {
+                    viewer.showEntity(plugin, nearby);
+                }
+            } else if (!hidden.contains(nearby.getUniqueId())) {
+                viewer.hideEntity(plugin, nearby);
+                hidden.add(nearby.getUniqueId());
+            }
         }
 
-        for (Entity entity : viewer.getWorld().getEntities()) {
-            if (entity instanceof Player || entity == viewer || !entity.isValid()) {
+        Iterator<UUID> iterator = hidden.iterator();
+        while (iterator.hasNext()) {
+            UUID entityId = iterator.next();
+            Entity entity = Bukkit.getEntity(entityId);
+            if (entity == null || !entity.isValid()) {
+                iterator.remove();
                 continue;
             }
-            if (stillHidden.contains(entity.getUniqueId())) {
-                if (!viewer.canSee(entity)) {
-                    viewer.showEntity(plugin, entity);
-                }
-                hidden.remove(entity.getUniqueId());
+            if (entity.getWorld() != viewer.getWorld()) {
+                viewer.showEntity(plugin, entity);
+                iterator.remove();
                 continue;
             }
-            if (viewer.canSee(entity)) {
-                viewer.hideEntity(plugin, entity);
+            if (scanned.contains(entityId) && isWithinDistance(viewer, entity, maxDistanceSquared)) {
+                viewer.showEntity(plugin, entity);
+                iterator.remove();
             }
-            hidden.add(entity.getUniqueId());
         }
 
         if (hidden.isEmpty()) {
@@ -146,5 +166,39 @@ public final class HideEntityService {
 
     private long getRefreshTicks() {
         return Math.max(1L, config.getLong("refresh-ticks", 20L));
+    }
+
+    private boolean shouldIgnore(Player viewer, Entity entity) {
+        return entity == null
+                || entity == viewer
+                || entity instanceof Player
+                || !entity.isValid()
+                || entity.getWorld() != viewer.getWorld()
+                || !hiddenTypes.contains(entity.getType());
+    }
+
+    private boolean isWithinDistance(Player viewer, Entity entity, double maxDistanceSquared) {
+        return viewer.getLocation().distanceSquared(entity.getLocation()) <= maxDistanceSquared;
+    }
+
+    private Set<EntityType> loadHiddenTypes() {
+        List<String> configured = config.getStringList("entity-types");
+        if (configured.isEmpty()) {
+            return EnumSet.complementOf(EnumSet.of(EntityType.PLAYER));
+        }
+        EnumSet<EntityType> types = EnumSet.noneOf(EntityType.class);
+        for (String value : configured) {
+            if (value == null || value.isBlank()) {
+                continue;
+            }
+            try {
+                EntityType type = EntityType.valueOf(value.trim().toUpperCase(java.util.Locale.ROOT));
+                if (type != EntityType.PLAYER) {
+                    types.add(type);
+                }
+            } catch (IllegalArgumentException ignored) {
+            }
+        }
+        return types;
     }
 }

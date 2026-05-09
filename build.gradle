@@ -1,5 +1,5 @@
 group = 'com.maris7'
-version = '2.0'
+version = '2.1'
 
 ext {
     marisTarget = (findProperty('marisTarget') ?: 'paper-26_1_2').toString()

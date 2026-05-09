@@ -1,6 +1,7 @@
 package com.maris7.guard.update;
 
 import com.maris7.guard.MarisGuard;
+import org.bukkit.Bukkit;
 
 import java.io.IOException;
 import java.net.URI;
@@ -16,9 +17,10 @@ public final class GitHubVersionChecker {
     private static final URI LATEST_RELEASE_URI = URI.create("https://api.github.com/repos/cocokea/MarisGuard/releases/latest");
     private static final Pattern TAG_NAME_PATTERN = Pattern.compile("\"tag_name\"\\s*:\\s*\"([^\"]+)\"");
     private static final String ANSI_RESET = "\u001B[0m";
-    private static final String ANSI_WHITE = "\u001B[97m";
+    private static final String ANSI_GRAY = "\u001B[37m";
     private static final String ANSI_GREEN = "\u001B[92m";
     private static final String ANSI_GOLD = "\u001B[38;2;255;227;0m";
+    private static final String ANSI_AQUA = "\u001B[96m";
 
     private final MarisGuard plugin;
     private final HttpClient httpClient;
@@ -31,7 +33,12 @@ public final class GitHubVersionChecker {
     }
 
     public void checkAsync() {
-        CompletableFuture.runAsync(this::checkNow);
+        Runnable delayedCheck = () -> CompletableFuture.runAsync(this::checkNow);
+        if (plugin.isFolia()) {
+            Bukkit.getGlobalRegionScheduler().runDelayed(plugin, task -> delayedCheck.run(), 40L);
+        } else {
+            Bukkit.getScheduler().runTaskLater(plugin, delayedCheck, 40L);
+        }
     }
 
     private void checkNow() {
@@ -59,11 +66,11 @@ public final class GitHubVersionChecker {
             latestVersion = normalizeVersion(latestVersion);
 
             if (compareVersions(currentVersion, latestVersion) >= 0) {
-                info("You are currently using the latest version", currentVersion);
+                infoLatest();
                 return;
             }
 
-            info("The new version has been released", latestVersion);
+            infoOutdated(latestVersion);
         } catch (InterruptedException exception) {
             Thread.currentThread().interrupt();
             warn();
@@ -129,10 +136,21 @@ public final class GitHubVersionChecker {
     }
 
     private void warn() {
-        plugin.getLogger().warning("Unable to check for the new version.");
+        plugin.getLogger().warning("Unable to check the current version of the plugin");
     }
 
-    private void info(String message, String version) {
-        plugin.getLogger().info(ANSI_WHITE + message + " (" + ANSI_GREEN + version + ANSI_WHITE + ")" + ANSI_RESET);
+    private void infoLatest() {
+        plugin.getLogger().info(ANSI_GREEN + "You are currently using the latest version." + ANSI_RESET);
+    }
+
+    private void infoOutdated(String version) {
+        plugin.getLogger().info(
+                ANSI_GRAY + "There is a new version available "
+                        + ANSI_GOLD + version
+                        + ANSI_GRAY + ". Visit "
+                        + ANSI_AQUA + "https://github.com/cocokea/MarisGuard/releases/tag/" + version
+                        + ANSI_GRAY + " to download the latest version."
+                        + ANSI_RESET
+        );
     }
 }
