@@ -1,59 +1,84 @@
 # MarisGuard Wiki
 
-MarisGuard is a guard plugin for Paper and Folia. It combines a few different systems in one jar:
+MarisGuard is split into separate modules now. The idea is simple: root config stays small, module config stays where the feature actually belongs.
 
-- loading screen handling
-- raytrace anti-xray
-- AntiEsp block masking and bait checks
-- player visibility raytrace
-
-This page stays on the practical side. It is meant to explain what the plugin does, which files matter, and what can be changed safely.
+This page focuses on real usage. It explains which file controls what, which commands exist, and where to tune things first.
 
 ## Files
 
-MarisGuard now uses three main config files:
-
-- `config.yml`
-- `checks.yml`
-- `message.yml`
-
 ### `config.yml`
 
-This is the main runtime config.
+This file now only contains:
 
-It contains:
+- `debug`
+- `storage`
 
-- loading screen remover settings
-- raytrace anti-xray settings
-- AntiEsp reveal settings
-- blacklist worlds
-- storage settings
-- player visibility raytrace settings
-
-### `checks.yml`
-
-This file holds the AntiEsp check logic.
-
-Right now that mainly means the `esper` section:
-
-- punishment settings
-- bait session timing
-- auto-check rules
-- mining-related auto-check filters
+That is intentional. It keeps the root config clean and avoids mixing unrelated systems together.
 
 ### `message.yml`
 
-This file holds the plugin messages.
+This file contains plugin messages.
 
-It is safe to edit message text here without touching the code.
+### `guis.yml`
+
+This file contains the `/esper` GUI layout text:
+
+- title
+- previous page item
+- next page item
+
+### `modules/antixray.yml`
+
+This file contains the raytrace anti-xray module:
+
+- anti-xray scheduler timing
+- worker thread count
+- world blacklist for raytrace anti-xray
+- per-world anti-xray settings
+
+### `modules/antifreecam.yml`
+
+This file contains the AntiFreeCam module:
+
+- enabled state
+- whitelist worlds
+- chunk refresh radius
+- chunk refresh budget
+
+### `modules/antiesp.yml`
+
+This file contains:
+
+- AntiEsp reveal settings
+- AntiEsp blacklist worlds
+- sensitive block config
+- Esper check settings
+- Esper auto-check settings
+
+### `modules/player-raytrace.yml`
+
+This file contains the player visibility raytrace module:
+
+- enabled state
+- world list
+- max distance
+- period
+- per-tick target limit
+
+### `modules/hideEntity.yml`
+
+This file contains the non-player entity hiding module:
+
+- enabled state
+- hide distance
+- refresh ticks
+- world list
 
 ## Commands
 
-MarisGuard now exposes two commands:
-
 ### `/esper`
 
-Main AntiEsp command.
+Main Esper command.
 
 Usage:
 
@@ -71,21 +96,16 @@ What it does:
 - `/esper reset <player>` clears stored violations
 - `/esper alerts` toggles alerts for the sender
 
-Permission:
+Permissions:
 
 ```text
 antiesp.esper
-```
-
-Alerts permission:
-
-```text
 esper.alerts
 ```
 
 ### `/marisguard reload`
 
-Short alias:
+Alias:
 
 ```text
 /ms reload
@@ -94,10 +114,13 @@ Short alias:
 What it reloads:
 
 - `config.yml`
-- `checks.yml`
 - `message.yml`
-
-It also reapplies default keys if new entries were added in an update and reloads the in-memory AntiEsp base template.
+- `guis.yml`
+- `modules/antixray.yml`
+- `modules/antifreecam.yml`
+- `modules/antiesp.yml`
+- `modules/player-raytrace.yml`
+- `modules/hideEntity.yml`
 
 Permission:
 
@@ -105,200 +128,115 @@ Permission:
 marisguard.admin
 ```
 
-## Loading screen remover
+## RayTrace AntiXray
 
-This part is there to reduce bad world-change behavior on the client side, especially loading terrain issues around world transfers and extra respawn packets.
+Main config file:
 
-Main settings:
-
-```yml
-debug: false
-track-ticks: 80
-death-bypass-ticks: 200
-aggressive-same-environment: true
+```text
+modules/antixray.yml
 ```
 
-In normal use these usually do not need much adjustment.
+Important sections:
 
-## RayTraceAntiXray
+- `settings.anti-xray`
+- `world-settings`
 
-This is not a basic block obfuscator. It works by deciding whether hidden blocks should be revealed to the client based on visibility logic.
+Important Paper requirement:
 
-Main settings:
-
-```yml
-settings:
-  anti-xray:
-    update-ticks: 4
-    ms-per-ray-trace-tick: 75
-    ray-trace-threads: 2
-```
-
-Per-world settings live under:
-
-```yml
-world-settings:
-```
-
-The most important values there are:
-
-- `ray-trace`
-- `ray-trace-distance`
-- `ray-trace-third-person`
-- `max-ray-trace-block-count-per-chunk`
-
-### Important Paper requirement
-
-Paper anti-xray still needs to be enabled on the server side.
-
-If Paper anti-xray is disabled, this part of MarisGuard will not work correctly.
-
-The important part is:
+Paper anti-xray still needs to be enabled server-side with:
 
 ```yml
 engine-mode: 1
 ```
 
-Depending on the server fork, the exact config path may differ a little, but `engine-mode` still needs to be `1`.
+If Paper anti-xray is disabled, this module will not behave correctly.
 
 ## AntiEsp
 
-AntiEsp does two separate things:
+Main config file:
 
-1. masks sensitive blocks from the client
-2. runs bait checks for suspected ESP users
-
-### Sensitive block masking
-
-Main settings:
-
-```yml
-reveal-radius: 64
-refresh-period-ticks: 10
-mask-material: AIR
+```text
+modules/antiesp.yml
 ```
 
-The old behavior was basically a radius reveal. That is no longer how it works.
+Important keys:
 
-Now a block must satisfy both conditions:
+- `reveal-radius`
+- `refresh-period-ticks`
+- `mask-material`
+- `blacklist-worlds`
+- `antiesp.mask-block-entity-packets`
 
-- it must be within the configured reveal range
-- it must pass a clear raytrace path from the player's eye position
+AntiEsp is the block masking side. Esper is the bait-check side. They live in the same file now because they belong to the same detection flow.
 
-That makes it behave much closer to the player visibility raytrace system.
+## Esper
 
-### Block entity handling
+Esper settings are inside:
 
-This can now be configured:
-
-```yml
-antiesp:
-  mask-block-entity-packets: true
+```text
+modules/antiesp.yml
 ```
 
-If this is enabled, block entity packets for currently masked blocks are cancelled.
-
-### Sensitive block list
-
-This is now configurable too:
-
-```yml
-antiesp:
-  sensitive-blocks:
-  sensitive-suffixes:
-```
-
-That means the set of blocks treated as sensitive is no longer locked in code only.
-
-### Blacklist worlds
-
-Blacklist worlds still live in `config.yml`:
-
-```yml
-blacklist-worlds:
-```
-
-Those worlds are skipped by AntiEsp and the related masking logic.
-
-## Esper checks
-
-Esper is the bait-check system used to catch players who are actually using ESP.
-
-Its settings now live in `checks.yml`.
-
-### Main options
+Main section:
 
 ```yml
 esper:
-  enabled: true
-  punishable: true
-  max-violations: 7
-  punishment-commands:
 ```
 
-### Auto-check behavior
+Important parts:
 
-The important part is:
+- punishable
+- max violations
+- punishment commands
+- duration
+- spawn distance
+- trigger distance
+- auto-check
 
-```yml
-esper:
-  auto-check:
+The auto-check logic also uses recent mining checks to avoid flagging random cave movement too aggressively.
+
+## AntiFreeCam
+
+Main config file:
+
+```text
+modules/antifreecam.yml
 ```
 
-That section controls:
+This module hides lower Y bands by forcing chunk refreshes when the viewer crosses the configured thresholds.
 
-- interval
-- parallel session limits
-- cooldowns
-- survival-only checks
-- Y-level gating
-- recent mining gating
+Important notes:
 
-### Recent mining filter
+- It only runs in allowed worlds
+- It uses whitelist worlds
+- It is separate from AntiEsp
+- It is separate from player raytrace
 
-Auto-checks are no longer triggered just because somebody is low in the world.
+## HideEntity
 
-The plugin now keeps a recent-mining window and only considers players for auto-check if they have actually been mining recently.
+Main config file:
 
-Relevant keys:
-
-```yml
-require-recent-mining: true
-recent-mining-window-seconds: 45
+```text
+modules/hideEntity.yml
 ```
 
-This is there to reduce false flags for players who are just walking through caves under `Y 29`.
+This module hides non-player entities when they are too far away from the viewer.
 
-## Storage
+It does not touch players. Player handling is left to the raytrace module to avoid overlap.
 
-Violation storage supports:
+## Player Raytrace
 
-- `sqlite`
-- `mysql`
+Main config file:
 
-Relevant section:
-
-```yml
-storage:
+```text
+modules/player-raytrace.yml
 ```
 
-The Hikari pool name is now `Esper`.
+This module hides player entity packets client-side when the target is fully blocked.
 
-For most smaller setups, SQLite is fine. MySQL only becomes necessary when external database control is actually useful.
+It also respects invisibility and `viewer.canSee(target)`.
 
-## Player visibility raytrace
-
-This system hides player entity packets client-side when players are fully blocked from view.
-
-It does not touch the tablist and it does not call Bukkit hide-player methods.
-
-Config:
-
-```yml
-player-visibility-raytrace:
-```
-
-Main values:
+Important keys:
 
 - `worlds`
 - `max-distance`
@@ -306,39 +244,45 @@ Main values:
 - `max-targets-per-tick`
 - `candidate-refresh-ticks`
 
-It also respects invisibility now. If the target is invisible or `viewer.canSee(target)` is false, MarisGuard does not force that player visible through this system.
+## Storage
 
-## Startup version check
+Storage stays in:
 
-On a successful startup, MarisGuard checks the latest GitHub release and logs one of these:
+```text
+config.yml
+```
 
-- `You are currently using the latest version (x.x.x)`
-- `The new version has been released (x.x.x)`
-- `Unable to check for the new version.`
+Supported backends:
 
-The message is intentionally short. It does not dump a long exception unless the code is changed to do so.
+- sqlite
+- mysql
 
-## Updating config files
+SQLite is enough for most setups. MySQL only makes sense if the data needs to live outside the server box.
 
-MarisGuard now tries to merge new default keys into:
+## Updating configs
+
+MarisGuard merges missing default keys into:
 
 - `config.yml`
-- `checks.yml`
 - `message.yml`
+- `guis.yml`
+- `modules/antixray.yml`
+- `modules/antifreecam.yml`
+- `modules/antiesp.yml`
+- `modules/player-raytrace.yml`
+- `modules/hideEntity.yml`
 
-That means when a new plugin version adds settings, existing files should pick up missing keys automatically instead of forcing a full reset.
+That means updates do not need a full wipe every time a new key is added.
 
-There is also a legacy migration path for old `esper` settings that were previously stored inside `config.yml`.
+There is also migration logic for older layouts, so older mixed configs can move into the new module structure automatically.
 
 ## Build targets
 
-The repository is split toward a multi-version layout:
+Current build targets:
 
-- `api/`
-- `core/`
-- `nms-v1_20/`
-- `nms-v1_21/`
-- `nms-v26_1_2/`
+- `paper-1.20`
+- `paper-1.21`
+- `paper-26_1_2`
 
 Build examples:
 
@@ -351,19 +295,16 @@ Build examples:
 Current release artifact:
 
 ```text
-MarisGuard-1.1.jar
+MarisGuard-2.0.jar
 ```
 
 ## Where to tune first
 
-If the plugin needs practical tuning, these are usually the first places to look:
+If the plugin needs practical tuning, start here:
 
-1. `blacklist-worlds`
-2. `world-settings.<world>.anti-xray.ray-trace`
-3. `ray-trace-distance`
-4. `reveal-radius`
-5. `refresh-period-ticks`
-6. `player-visibility-raytrace.max-distance`
-7. `esper.auto-check.*`
-
-That is where most noticeable behavior changes come from.
+1. `modules/antixray.yml` -> blacklist worlds and per-world anti-xray toggle
+2. `modules/antiesp.yml` -> reveal radius and refresh period
+3. `modules/antiesp.yml` -> esper auto-check
+4. `modules/antifreecam.yml` -> whitelist worlds
+5. `modules/player-raytrace.yml` -> max distance and period
+6. `modules/hideEntity.yml` -> distance and refresh ticks

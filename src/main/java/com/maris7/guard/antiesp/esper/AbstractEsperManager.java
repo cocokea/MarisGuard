@@ -221,7 +221,7 @@ public abstract class AbstractEsperManager implements Listener {
         if (world == null) {
             return true;
         }
-        List<String> blacklist = plugin.getConfig().getStringList("blacklist-worlds");
+        List<String> blacklist = plugin.getAntiEspConfig().getStringList("blacklist-worlds");
         return WorldNameMatcher.contains(blacklist, world);
     }
 

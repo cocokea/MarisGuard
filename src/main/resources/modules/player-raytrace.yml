@@ -1,0 +1,8 @@
+player-visibility-raytrace:
+  enabled: true
+  worlds:
+    - world
+  max-distance: 32.0
+  check-period-ticks: 10
+  max-targets-per-tick: 4
+  candidate-refresh-ticks: 6

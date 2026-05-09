@@ -10,8 +10,16 @@ if (!targetScript.exists()) {
     throw new GradleException("Unknown marisTarget '${marisTarget}'. Expected one of: paper-1.20, paper-1.21, paper-26_1_2")
 }
 
-apply from: rootProject.file('gradle/core-common.gradle')
+ext.targetConfig = [
+        paperApiCoordinate: null,
+        mappedServerJar   : null,
+        archiveSuffix     : '',
+        runtimeModule     : null,
+        javaRelease       : 21
+]
+
 apply from: targetScript
+apply from: rootProject.file('gradle/core-common.gradle')
 
 sourceSets {
     main {

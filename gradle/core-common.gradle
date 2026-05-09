@@ -1,11 +1,13 @@
-ext {
-    targetConfig = [
-            paperApiCoordinate: null,
-            mappedServerJar   : null,
-            archiveSuffix     : '',
-            runtimeModule     : null,
-            javaRelease       : 21
-    ]
+if (!project.ext.has('targetConfig')) {
+    ext {
+        targetConfig = [
+                paperApiCoordinate: null,
+                mappedServerJar   : null,
+                archiveSuffix     : '',
+                runtimeModule     : null,
+                javaRelease       : 21
+        ]
+    }
 }
 
 dependencies {

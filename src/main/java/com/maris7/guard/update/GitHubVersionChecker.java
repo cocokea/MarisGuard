@@ -1,8 +1,6 @@
 package com.maris7.guard.update;
 
 import com.maris7.guard.MarisGuard;
-import com.maris7.guard.antiesp.util.ColorUtil;
-import net.md_5.bungee.api.ChatColor;
 
 import java.io.IOException;
 import java.net.URI;
@@ -17,6 +15,10 @@ import java.util.regex.Pattern;
 public final class GitHubVersionChecker {
     private static final URI LATEST_RELEASE_URI = URI.create("https://api.github.com/repos/cocokea/MarisGuard/releases/latest");
     private static final Pattern TAG_NAME_PATTERN = Pattern.compile("\"tag_name\"\\s*:\\s*\"([^\"]+)\"");
+    private static final String ANSI_RESET = "\u001B[0m";
+    private static final String ANSI_WHITE = "\u001B[97m";
+    private static final String ANSI_GREEN = "\u001B[92m";
+    private static final String ANSI_GOLD = "\u001B[38;2;255;227;0m";
 
     private final MarisGuard plugin;
     private final HttpClient httpClient;
@@ -57,11 +59,11 @@ public final class GitHubVersionChecker {
             latestVersion = normalizeVersion(latestVersion);
 
             if (compareVersions(currentVersion, latestVersion) >= 0) {
-                plugin.getLogger().info(ChatColor.stripColor(ColorUtil.colorize("&fYou are currently using the latest version (&a" + currentVersion + "&f)")));
+                info("You are currently using the latest version", currentVersion);
                 return;
             }
 
-            plugin.getLogger().info(ChatColor.stripColor(ColorUtil.colorize("&fThe new version has been released (&a" + latestVersion + "&f)")));
+            info("The new version has been released", latestVersion);
         } catch (InterruptedException exception) {
             Thread.currentThread().interrupt();
             warn();
@@ -128,5 +130,9 @@ public final class GitHubVersionChecker {
 
     private void warn() {
         plugin.getLogger().warning("Unable to check for the new version.");
+    }
+
+    private void info(String message, String version) {
+        plugin.getLogger().info(ANSI_WHITE + message + " (" + ANSI_GREEN + version + ANSI_WHITE + ")" + ANSI_RESET);
     }
 }

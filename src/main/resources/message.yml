@@ -9,10 +9,10 @@ command:
 guard:
   usage: '%prefix%Use &e/marisguard reload&f.'
   no-permission: '%prefix%You do not have permission to use this command.'
-  reload-success: '%prefix%Message and check files have been reloaded.'
+  reload-success: '%prefix%Config, message, gui, and module files have been reloaded.'
 
 esper:
-  disabled: '%prefix%AntiEsp checks are disabled in &echecks.yml&f.'
+  disabled: '%prefix%AntiEsp checks are disabled in &emodules/antiesp.yml&f.'
   blacklisted-world: '%prefix%Cannot run a check for &e%player% &fin a blacklisted world.'
   create-failed: '%prefix%Could not create the virtual bait base for &e%player%&f.'
   started: '%prefix%Started a check for &e%player%&f.'

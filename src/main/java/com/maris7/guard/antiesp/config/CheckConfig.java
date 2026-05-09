@@ -18,14 +18,14 @@ public final class CheckConfig {
     }
 
     public void reload() {
-        File file = new File(plugin.getDataFolder(), "checks.yml");
+        File file = new File(plugin.getDataFolder(), "modules/antiesp.yml");
         this.config = YamlConfiguration.loadConfiguration(file);
     }
 
     public ConfigurationSection getEsperSection() {
         ConfigurationSection section = config.getConfigurationSection("esper");
         if (section == null) {
-            throw new IllegalStateException("checks.yml is missing esper section");
+            throw new IllegalStateException("modules/antiesp.yml is missing esper section");
         }
         return section;
     }

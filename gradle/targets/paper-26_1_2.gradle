@@ -1,5 +1,5 @@
 targetConfig.paperApiCoordinate = 'io.papermc.paper:paper-api:26.1.2.build.+'
 targetConfig.mappedServerJar = 'libs/paper-server-1.21.11-R0.1-SNAPSHOT-mojang-mapped.jar'
-targetConfig.javaRelease = 21
+targetConfig.javaRelease = 25
 targetConfig.archiveSuffix = ''
 targetConfig.runtimeModule = project(':nms-v26_1_2')

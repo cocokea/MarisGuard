@@ -13,6 +13,7 @@ import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerBl
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerChunkData;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerMultiBlockChange;
 import com.maris7.guard.antiesp.service.AbstractPlayerRevealService;
+import com.maris7.guard.antiesp.service.SensitiveBlockMatcher;
 import com.maris7.guard.antiesp.service.TrackedBlockState;
 import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import org.bukkit.Material;
@@ -29,6 +30,7 @@ import java.util.Set;
 public final class MaskedChunkPacketListener extends PacketListenerAbstract {
 
     private final AbstractPlayerRevealService revealService;
+    private final int revealRadiusSquared;
     private final Material maskMaterial;
     private final int maskStateId;
     private final WrappedBlockState maskBlockState;
@@ -42,6 +44,7 @@ public final class MaskedChunkPacketListener extends PacketListenerAbstract {
 
     public MaskedChunkPacketListener(AbstractPlayerRevealService revealService) {
         this.revealService = revealService;
+        this.revealRadiusSquared = revealService.getRevealRadiusSquared();
         this.maskMaterial = revealService.getMaskMaterial();
         this.maskBlockState = SpigotConversionUtil.fromBukkitBlockData(maskMaterial.createBlockData());
         this.maskStateId = maskBlockState.getGlobalId();
@@ -120,7 +123,8 @@ public final class MaskedChunkPacketListener extends PacketListenerAbstract {
                         }
 
                         final int worldX = baseX + x;
-                        final boolean shouldMask = !revealService.isBlockRevealedToClient(player, worldX, worldY, worldZ);
+                        final boolean shouldMask = !revealService.isBlockRevealedToClient(player, worldX, worldY, worldZ)
+                                && !isWithinRevealRadius(playerLocation, worldX, worldY, worldZ);
 
                         trackedStates.add(TrackedBlockState.create(
                                 worldX,
@@ -182,7 +186,9 @@ public final class MaskedChunkPacketListener extends PacketListenerAbstract {
             return;
         }
 
-        final boolean shouldMask = !revealService.isBlockRevealedToClient(player, pos.x, pos.y, pos.z);
+        final AbstractPlayerRevealService.CachedPlayerLocation playerLocation = revealService.getCachedLocation(player.getUniqueId());
+        final boolean shouldMask = !revealService.isBlockRevealedToClient(player, pos.x, pos.y, pos.z)
+                && !isWithinRevealRadius(playerLocation, pos.x, pos.y, pos.z);
         revealService.upsertTrackedBlock(player, TrackedBlockState.create(
                 pos.x, pos.y, pos.z, cachedState.blockData(), maskMaterial, shouldMask
         ));
@@ -210,6 +216,7 @@ public final class MaskedChunkPacketListener extends PacketListenerAbstract {
             return;
         }
 
+        final AbstractPlayerRevealService.CachedPlayerLocation playerLocation = revealService.getCachedLocation(player.getUniqueId());
         boolean mutated = false;
 
         for (WrapperPlayServerMultiBlockChange.EncodedBlock block : blocks) {
@@ -227,7 +234,8 @@ public final class MaskedChunkPacketListener extends PacketListenerAbstract {
                 continue;
             }
 
-            final boolean shouldMask = !revealService.isBlockRevealedToClient(player, x, y, z);
+            final boolean shouldMask = !revealService.isBlockRevealedToClient(player, x, y, z)
+                    && !isWithinRevealRadius(playerLocation, x, y, z);
             revealService.upsertTrackedBlock(player, TrackedBlockState.create(
                     x, y, z, cachedState.blockData(), maskMaterial, shouldMask
             ));
@@ -258,10 +266,6 @@ public final class MaskedChunkPacketListener extends PacketListenerAbstract {
         final WrapperPlayServerBlockEntityData wrapper = new WrapperPlayServerBlockEntityData(event);
         final Vector3i pos = wrapper.getPosition();
         if (pos == null) {
-            return;
-        }
-
-        if (!revealService.shouldMaskBlockEntityPackets()) {
             return;
         }
 
@@ -309,8 +313,19 @@ public final class MaskedChunkPacketListener extends PacketListenerAbstract {
         return stateCache.computeIfAbsent(globalId, ignored -> {
             final BlockData blockData = SpigotConversionUtil.toBukkitBlockData(state);
             final Material material = blockData.getMaterial();
-            return new CachedBlockState(revealService.isSensitive(material), blockData);
+            return new CachedBlockState(SensitiveBlockMatcher.isSensitive(material), blockData);
         });
+    }
+
+    private boolean isWithinRevealRadius(AbstractPlayerRevealService.CachedPlayerLocation playerLocation, int x, int y, int z) {
+        if (playerLocation == null) {
+            return false;
+        }
+
+        final double dx = (x + 0.5D) - playerLocation.x();
+        final double dy = (y + 0.5D) - playerLocation.y();
+        final double dz = (z + 0.5D) - playerLocation.z();
+        return (dx * dx) + (dy * dy) + (dz * dz) <= revealRadiusSquared;
     }
 
     private record CachedBlockState(boolean sensitive, BlockData blockData) {

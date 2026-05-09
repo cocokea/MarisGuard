@@ -42,7 +42,7 @@ public final class WorldListener implements Listener {
         }
 
         {
-            FileConfiguration config = plugin.getConfig();
+            FileConfiguration config = plugin.getAntiXrayConfig();
             String worldName = plugin.worldSettingsKey(world);
             boolean rayTraceThirdPerson = config.getBoolean("world-settings." + worldName + ".anti-xray.ray-trace-third-person", config.getBoolean("world-settings.default.anti-xray.ray-trace-third-person"));
             double rayTraceDistance = Math.max(config.getDouble("world-settings." + worldName + ".anti-xray.ray-trace-distance", config.getDouble("world-settings.default.anti-xray.ray-trace-distance")), 0.);

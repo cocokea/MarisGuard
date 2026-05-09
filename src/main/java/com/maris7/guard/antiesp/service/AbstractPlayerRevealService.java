@@ -20,7 +20,6 @@ import org.bukkit.event.player.PlayerTeleportEvent;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -36,9 +35,6 @@ public abstract class AbstractPlayerRevealService implements Listener {
     protected final int revealRadius;
     protected final int revealRadiusSquared;
     protected final Material maskMaterial;
-    private final Set<Material> sensitiveBlocks;
-    private final Set<String> sensitiveSuffixes;
-    private final boolean maskBlockEntityPackets;
     private final List<String> blacklistedWorlds;
 
     private final Map<UUID, Map<Long, Map<Long, TrackedBlockState>>> trackedByPlayer = new ConcurrentHashMap<>();
@@ -51,16 +47,13 @@ public abstract class AbstractPlayerRevealService implements Listener {
 
     protected AbstractPlayerRevealService(MarisGuard plugin) {
         this.plugin = plugin;
-        this.revealRadius = Math.max(1, plugin.getConfig().getInt("reveal-radius", 16));
+        this.revealRadius = Math.max(1, plugin.getAntiEspConfig().getInt("reveal-radius", 16));
         this.revealRadiusSquared = revealRadius * revealRadius;
-        this.maskMaterial = Material.matchMaterial(plugin.getConfig().getString("mask-material", "AIR"));
+        this.maskMaterial = Material.matchMaterial(plugin.getAntiEspConfig().getString("mask-material", "AIR"));
         if (this.maskMaterial == null || (!this.maskMaterial.isBlock() && !this.maskMaterial.isAir())) {
             throw new IllegalStateException("mask-material must be a valid block material or AIR");
         }
-        this.sensitiveBlocks = loadSensitiveBlocks();
-        this.sensitiveSuffixes = loadSensitiveSuffixes();
-        this.maskBlockEntityPackets = plugin.getConfig().getBoolean("antiesp.mask-block-entity-packets", true);
-        this.blacklistedWorlds = List.copyOf(plugin.getConfig().getStringList("blacklist-worlds"));
+        this.blacklistedWorlds = List.copyOf(plugin.getAntiEspConfig().getStringList("blacklist-worlds"));
     }
 
     public abstract void start();
@@ -75,7 +68,7 @@ public abstract class AbstractPlayerRevealService implements Listener {
     }
 
     public int getRefreshPeriodTicks() {
-        return Math.max(1, plugin.getConfig().getInt("refresh-period-ticks", 10));
+        return Math.max(1, plugin.getAntiEspConfig().getInt("refresh-period-ticks", 10));
     }
 
     public boolean isWorldBlacklisted(World world) {
@@ -100,26 +93,6 @@ public abstract class AbstractPlayerRevealService implements Listener {
             }
         }
         return isWorldBlacklisted(knownWorldByPlayer.get(player.getUniqueId()));
-    }
-
-    public boolean shouldMaskBlockEntityPackets() {
-        return maskBlockEntityPackets;
-    }
-
-    public boolean isSensitive(Material material) {
-        if (material == null) {
-            return false;
-        }
-        if (sensitiveBlocks.contains(material)) {
-            return true;
-        }
-        String name = material.name();
-        for (String suffix : sensitiveSuffixes) {
-            if (name.endsWith(suffix)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     protected final void updateKnownWorld(Player player) {
@@ -418,7 +391,7 @@ public abstract class AbstractPlayerRevealService implements Listener {
         if (player == null || isPlayerInBlacklistedWorld(player)) {
             return;
         }
-        if (!isSensitive(event.getBlockPlaced().getType())) {
+        if (!SensitiveBlockMatcher.isSensitive(event.getBlockPlaced().getType())) {
             return;
         }
 
@@ -539,40 +512,4 @@ public abstract class AbstractPlayerRevealService implements Listener {
     public record CachedPlayerLocation(double x, double y, double z, String worldName) {
     }
 
-    private Set<Material> loadSensitiveBlocks() {
-        List<String> configured = plugin.getConfig().getStringList("antiesp.sensitive-blocks");
-        LinkedHashSet<Material> materials = new LinkedHashSet<>();
-        if (configured.isEmpty()) {
-            materials.addAll(SensitiveBlockMatcher.defaultSensitiveBlocks());
-            return materials;
-        }
-        for (String entry : configured) {
-            Material material = Material.matchMaterial(entry);
-            if (material != null && material.isBlock()) {
-                materials.add(material);
-            }
-        }
-        if (materials.isEmpty()) {
-            materials.addAll(SensitiveBlockMatcher.defaultSensitiveBlocks());
-        }
-        return materials;
-    }
-
-    private Set<String> loadSensitiveSuffixes() {
-        List<String> configured = plugin.getConfig().getStringList("antiesp.sensitive-suffixes");
-        LinkedHashSet<String> suffixes = new LinkedHashSet<>();
-        if (configured.isEmpty()) {
-            suffixes.addAll(SensitiveBlockMatcher.defaultSensitiveSuffixes());
-            return suffixes;
-        }
-        for (String entry : configured) {
-            if (entry != null && !entry.isBlank()) {
-                suffixes.add(entry.trim().toUpperCase(java.util.Locale.ROOT));
-            }
-        }
-        if (suffixes.isEmpty()) {
-            suffixes.addAll(SensitiveBlockMatcher.defaultSensitiveSuffixes());
-        }
-        return suffixes;
-    }
 }

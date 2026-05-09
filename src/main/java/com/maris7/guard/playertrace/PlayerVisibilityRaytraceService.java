@@ -112,7 +112,7 @@ public final class PlayerVisibilityRaytraceService implements Listener {
     }
 
     public void reload() {
-        FileConfiguration config = plugin.getConfig();
+        FileConfiguration config = plugin.getPlayerRaytraceConfig();
         this.enabled = config.getBoolean("player-visibility-raytrace.enabled", true);
         this.maxDistance = Math.max(8.0D, config.getDouble("player-visibility-raytrace.max-distance", 48.0D));
         this.maxDistanceSquared = maxDistance * maxDistance;

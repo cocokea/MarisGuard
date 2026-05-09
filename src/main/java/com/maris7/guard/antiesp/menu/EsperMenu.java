@@ -5,6 +5,7 @@ import com.maris7.guard.antiesp.util.ColorUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -23,12 +24,14 @@ public final class EsperMenu {
     }
 
     public static void open(Player viewer, AbstractEsperManager manager, int page) {
+        FileConfiguration gui = manager.plugin().getGuiConfig();
         List<AbstractEsperManager.FlaggedPlayerEntry> flagged = manager.getFlaggedPlayers();
         int maxPage = Math.max(0, (flagged.size() - 1) / PAGE_SIZE);
         int safePage = Math.max(0, Math.min(page, maxPage));
+        String titleFormat = gui.getString("esper.title", "&8Esper &7(%count%)");
 
         Inventory inventory = Bukkit.createInventory(new EsperMenuHolder(safePage), 54,
-                ColorUtil.colorize("&8Suspects " + manager.getFlaggedPlayerCount()));
+                ColorUtil.colorize(titleFormat.replace("%count%", String.valueOf(manager.getFlaggedPlayerCount()))));
 
         int start = safePage * PAGE_SIZE;
         int end = Math.min(flagged.size(), start + PAGE_SIZE);
@@ -37,8 +40,12 @@ public final class EsperMenu {
             inventory.setItem(index - start, createPlayerHead(entry));
         }
 
-        inventory.setItem(PREVIOUS_SLOT, createArrow("&#00f986Next page", List.of("&fClick to continue")));
-        inventory.setItem(NEXT_SLOT, createArrow("&#00f986Next page", List.of("&fClick to continue")));
+        inventory.setItem(PREVIOUS_SLOT, createArrow(
+                gui.getString("esper.previous.name", "&#00F986Previous page"),
+                gui.getStringList("esper.previous.lore")));
+        inventory.setItem(NEXT_SLOT, createArrow(
+                gui.getString("esper.next.name", "&#00F986Next page"),
+                gui.getStringList("esper.next.lore")));
         viewer.openInventory(inventory);
     }
 
@@ -52,8 +59,8 @@ public final class EsperMenu {
         meta.setOwningPlayer(offlinePlayer);
         meta.setDisplayName(ColorUtil.colorize("&f" + entry.name()));
         meta.setLore(List.of(
-                ColorUtil.colorize("&7check: &fesper"),
-                ColorUtil.colorize("&7flags: &f" + entry.violations())
+                ColorUtil.colorize("&7Check: &fEsper"),
+                ColorUtil.colorize("&7Flags: &f" + entry.violations())
         ));
         head.setItemMeta(meta);
         return head;

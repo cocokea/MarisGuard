@@ -1,8 +1,9 @@
 group = 'com.maris7'
-version = '1.1'
+version = '2.0'
 
 ext {
     marisTarget = (findProperty('marisTarget') ?: 'paper-26_1_2').toString()
+    defaultJavaRelease = marisTarget == 'paper-26_1_2' ? 25 : 21
 }
 
 subprojects {
@@ -25,14 +26,14 @@ subprojects {
     }
 
     java {
-        toolchain.languageVersion = JavaLanguageVersion.of(21)
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
+        toolchain.languageVersion = JavaLanguageVersion.of(rootProject.ext.defaultJavaRelease)
+        sourceCompatibility = JavaVersion.toVersion(rootProject.ext.defaultJavaRelease)
+        targetCompatibility = JavaVersion.toVersion(rootProject.ext.defaultJavaRelease)
     }
 
     tasks.withType(JavaCompile).configureEach {
         options.encoding = 'UTF-8'
-        options.release.set(21)
+        options.release.set(rootProject.ext.defaultJavaRelease)
     }
 }
 

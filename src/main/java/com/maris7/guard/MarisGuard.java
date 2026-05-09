@@ -5,6 +5,7 @@ import com.github.Anon8281.universalScheduler.scheduling.schedulers.TaskSchedule
 import com.github.retrooper.packetevents.PacketEvents;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.maris7.guard.antifreecam.MarisFreeCamPlugin;
 import com.maris7.guard.antiesp.base.BaseTemplate;
 import com.maris7.guard.antiesp.base.BaseTemplateLoader;
 import com.maris7.guard.antiesp.command.EsperCommand;
@@ -23,6 +24,7 @@ import com.maris7.guard.antiesp.service.AbstractPlayerRevealService;
 import com.maris7.guard.antiesp.storage.HikariViolationStorage;
 import com.maris7.guard.antiesp.storage.ViolationStorage;
 import com.maris7.guard.command.MarisGuardCommand;
+import com.maris7.guard.hideentity.HideEntityService;
 import com.maris7.guard.loadingscreenremover.Metrics;
 import com.maris7.guard.loadingscreenremover.PlayerManager;
 import com.maris7.guard.playertrace.NoopPlayerVisibilityPacketBridge;
@@ -53,7 +55,9 @@ import net.minecraft.world.phys.Vec3;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.command.PluginCommand;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.craftbukkit.CraftWorld;
 import org.bukkit.craftbukkit.entity.CraftEntity;
 import org.bukkit.entity.Entity;
@@ -66,6 +70,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Timer;
 import java.util.Locale;
 import java.util.UUID;
@@ -107,6 +112,18 @@ public final class MarisGuard extends JavaPlugin {
     private PlayerVisibilityRaytraceService playerVisibilityRaytraceService;
     private PlayerVisibilityPacketBridge playerVisibilityPacketBridge;
     private RayTracePacketBridge rayTracePacketBridge;
+    private MarisFreeCamPlugin freeCamPlugin;
+    private HideEntityService hideEntityService;
+    private FileConfiguration antiXrayConfig;
+    private FileConfiguration antiEspConfig;
+    private FileConfiguration antiFreeCamConfig;
+    private FileConfiguration playerRaytraceConfig;
+    private FileConfiguration guiConfig;
+
+    private static final boolean LOADING_SCREEN_DEBUG = false;
+    private static final boolean LOADING_SCREEN_AGGRESSIVE_SAME_ENVIRONMENT = true;
+    private static final long LOADING_SCREEN_TRACK_TICKS = 80L;
+    private static final long LOADING_SCREEN_DEATH_BYPASS_TICKS = 200L;
 
     @Override
     public void onEnable() {
@@ -114,6 +131,8 @@ public final class MarisGuard extends JavaPlugin {
         enableLoadingScreenRemover();
         enableRayTraceAntiXray();
         enableAntiEsp();
+        enableAntiFreeCam();
+        enableHideEntity();
         enablePlayerVisibilityRaytrace();
         if (isEnabled()) {
             new GitHubVersionChecker(this).checkAsync();
@@ -123,15 +142,17 @@ public final class MarisGuard extends JavaPlugin {
     @Override
     public void onDisable() {
         disablePlayerVisibilityRaytrace();
+        disableHideEntity();
+        disableAntiFreeCam();
         disableAntiEsp();
         disableRayTraceAntiXray();
     }
 
     private void enableLoadingScreenRemover() {
         this.debugEnabled = getConfig().getBoolean("debug", false);
-        this.aggressiveSameEnvironment = getConfig().getBoolean("aggressive-same-environment", true);
-        this.trackTicks = Math.max(1L, getConfig().getLong("track-ticks", 80L));
-        this.deathBypassTicks = Math.max(trackTicks, getConfig().getLong("death-bypass-ticks", 200L));
+        this.aggressiveSameEnvironment = LOADING_SCREEN_AGGRESSIVE_SAME_ENVIRONMENT;
+        this.trackTicks = Math.max(1L, LOADING_SCREEN_TRACK_TICKS);
+        this.deathBypassTicks = Math.max(trackTicks, LOADING_SCREEN_DEATH_BYPASS_TICKS);
         this.playerManager = new PlayerManager();
         this.taskScheduler = UniversalScheduler.getScheduler(this);
         com.maris7.guard.loadingscreenremover.PlayerListener playerListener = new com.maris7.guard.loadingscreenremover.PlayerListener(this);
@@ -145,7 +166,7 @@ public final class MarisGuard extends JavaPlugin {
 
     private void enableRayTraceAntiXray() {
         this.rayTracePacketBridge = createRayTracePacketBridge();
-        FileConfiguration config = getConfig();
+        FileConfiguration config = getAntiXrayConfig();
         config.options().copyDefaults(true);
         try {
             Class.forName("io.papermc.paper.threadedregions.RegionizedServer");
@@ -228,12 +249,36 @@ public final class MarisGuard extends JavaPlugin {
         playerVisibilityRaytraceService.start();
     }
 
+    private void enableAntiFreeCam() {
+        this.freeCamPlugin = new MarisFreeCamPlugin(this);
+        freeCamPlugin.start();
+    }
+
     private void disablePlayerVisibilityRaytrace() {
         if (playerVisibilityRaytraceService != null) {
             playerVisibilityRaytraceService.stop();
             playerVisibilityRaytraceService = null;
         }
         playerVisibilityPacketBridge = null;
+    }
+
+    private void disableAntiFreeCam() {
+        if (freeCamPlugin != null) {
+            freeCamPlugin.stop();
+            freeCamPlugin = null;
+        }
+    }
+
+    private void enableHideEntity() {
+        this.hideEntityService = new HideEntityService(this);
+        hideEntityService.start();
+    }
+
+    private void disableHideEntity() {
+        if (hideEntityService != null) {
+            hideEntityService.stop();
+            hideEntityService = null;
+        }
     }
 
     private PlayerVisibilityPacketBridge createPlayerVisibilityPacketBridge() {
@@ -343,9 +388,20 @@ public final class MarisGuard extends JavaPlugin {
         saveDefaultConfig();
         mergeYamlResource("config.yml");
         reloadConfig();
-        mergeYamlResource("checks.yml");
         mergeYamlResource("message.yml");
+        mergeYamlResource("guis.yml");
+        mergeYamlResource("modules/hideEntity.yml");
+        mergeYamlResource("modules/antixray.yml");
+        mergeYamlResource("modules/antifreecam.yml");
+        mergeYamlResource("modules/antiesp.yml");
+        mergeYamlResource("modules/player-raytrace.yml");
+        mergeYamlResource("modules/hideEntity.yml");
+        reloadModuleConfigs();
+        migrateLegacyConfigLayout();
+        reloadModuleConfigs();
         migrateLegacyEsperConfig();
+        migrateRayTraceBlacklist();
+        reloadModuleConfigs();
     }
 
     private void mergeYamlResource(String name) {
@@ -371,22 +427,98 @@ public final class MarisGuard extends JavaPlugin {
     }
 
     private void migrateLegacyEsperConfig() {
-        org.bukkit.configuration.ConfigurationSection legacyEsper = getConfig().getConfigurationSection("esper");
+        File antiEspFile = new File(getDataFolder(), "modules/antiesp.yml");
+        YamlConfiguration antiEsp = YamlConfiguration.loadConfiguration(antiEspFile);
+        if (antiEsp.getConfigurationSection("esper") != null) {
+            return;
+        }
+        ConfigurationSection legacyEsper = getConfig().getConfigurationSection("esper");
         if (legacyEsper == null) {
-            return;
+            File checksFile = new File(getDataFolder(), "checks.yml");
+            if (!checksFile.isFile()) {
+                return;
+            }
+            YamlConfiguration checks = YamlConfiguration.loadConfiguration(checksFile);
+            legacyEsper = checks.getConfigurationSection("esper");
+            if (legacyEsper == null) {
+                return;
+            }
         }
-
-        File checksFile = new File(getDataFolder(), "checks.yml");
-        org.bukkit.configuration.file.YamlConfiguration checks = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(checksFile);
-        if (checks.getConfigurationSection("esper") != null) {
-            return;
-        }
-
-        checks.createSection("esper", legacyEsper.getValues(true));
+        antiEsp.createSection("esper", legacyEsper.getValues(true));
         try {
-            checks.save(checksFile);
+            antiEsp.save(antiEspFile);
         } catch (Exception exception) {
-            getLogger().warning("Unable to migrate legacy esper settings into checks.yml: " + exception.getMessage());
+            getLogger().warning("Unable to migrate legacy esper settings into modules/antiesp.yml: " + exception.getMessage());
+        }
+    }
+
+    private void migrateRayTraceBlacklist() {
+        final String newPath = "settings.anti-xray.blacklist-worlds";
+        if (getAntiXrayConfig().isList(newPath)) {
+            return;
+        }
+
+        List<String> legacy = getConfig().getStringList("blacklist-worlds");
+        if (legacy.isEmpty()) {
+            return;
+        }
+
+        antiXrayConfig.set(newPath, legacy);
+        saveYamlFile("modules/antixray.yml", antiXrayConfig);
+    }
+
+    private void migrateLegacyConfigLayout() {
+        migrateList(getConfig(), antiEspConfig, "blacklist-worlds", "blacklist-worlds");
+        migrateValue(getConfig(), antiEspConfig, "reveal-radius", "reveal-radius");
+        migrateValue(getConfig(), antiEspConfig, "refresh-period-ticks", "refresh-period-ticks");
+        migrateValue(getConfig(), antiEspConfig, "mask-material", "mask-material");
+        migrateSection(getConfig(), antiEspConfig, "antiesp", "antiesp");
+
+        migrateSection(getConfig(), antiFreeCamConfig, "antifreecam", "antifreecam");
+
+        migrateSection(getConfig(), playerRaytraceConfig, "player-visibility-raytrace", "player-visibility-raytrace");
+
+        migrateSection(getConfig(), antiXrayConfig, "settings", "settings");
+        migrateSection(getConfig(), antiXrayConfig, "world-settings", "world-settings");
+    }
+
+    private void migrateValue(FileConfiguration source, FileConfiguration target, String sourcePath, String targetPath) {
+        if (target.contains(targetPath) || !source.contains(sourcePath)) {
+            return;
+        }
+        target.set(targetPath, source.get(sourcePath));
+        saveModuleByPath(targetPath, target);
+    }
+
+    private void migrateList(FileConfiguration source, FileConfiguration target, String sourcePath, String targetPath) {
+        if (target.isList(targetPath) || !source.isList(sourcePath)) {
+            return;
+        }
+        target.set(targetPath, source.getStringList(sourcePath));
+        saveModuleByPath(targetPath, target);
+    }
+
+    private void migrateSection(FileConfiguration source, FileConfiguration target, String sourcePath, String targetPath) {
+        if (target.isConfigurationSection(targetPath) || !source.isConfigurationSection(sourcePath)) {
+            return;
+        }
+        ConfigurationSection sourceSection = source.getConfigurationSection(sourcePath);
+        if (sourceSection == null) {
+            return;
+        }
+        target.createSection(targetPath, sourceSection.getValues(true));
+        saveModuleByPath(targetPath, target);
+    }
+
+    private void saveModuleByPath(String path, FileConfiguration target) {
+        if (target == antiXrayConfig) {
+            saveYamlFile("modules/antixray.yml", target);
+        } else if (target == antiEspConfig) {
+            saveYamlFile("modules/antiesp.yml", target);
+        } else if (target == antiFreeCamConfig) {
+            saveYamlFile("modules/antifreecam.yml", target);
+        } else if (target == playerRaytraceConfig) {
+            saveYamlFile("modules/player-raytrace.yml", target);
         }
     }
 
@@ -463,8 +595,8 @@ public final class MarisGuard extends JavaPlugin {
         if (world == null) {
             return false;
         }
-        FileConfiguration config = getConfig();
-        if (WorldNameMatcher.contains(config.getStringList("blacklist-worlds"), world)) {
+        FileConfiguration config = getAntiXrayConfig();
+        if (WorldNameMatcher.contains(config.getStringList("settings.anti-xray.blacklist-worlds"), world)) {
             return false;
         }
         return config.getBoolean("world-settings." + worldSettingsKey(world) + ".anti-xray.ray-trace",
@@ -472,7 +604,7 @@ public final class MarisGuard extends JavaPlugin {
     }
 
     public String worldSettingsKey(World world) {
-        FileConfiguration config = getConfig();
+        FileConfiguration config = getAntiXrayConfig();
         String namespaced = world.getKey().toString();
         String key = world.getKey().getKey();
         String name = world.getName();
@@ -506,17 +638,56 @@ public final class MarisGuard extends JavaPlugin {
         reloadConfig();
         mergeYamlResource("config.yml");
         reloadConfig();
-        mergeYamlResource("checks.yml");
         mergeYamlResource("message.yml");
+        mergeYamlResource("guis.yml");
+        mergeYamlResource("modules/hideEntity.yml");
+        mergeYamlResource("modules/antixray.yml");
+        mergeYamlResource("modules/antifreecam.yml");
+        mergeYamlResource("modules/antiesp.yml");
+        mergeYamlResource("modules/player-raytrace.yml");
+        mergeYamlResource("modules/hideEntity.yml");
+        reloadModuleConfigs();
+        migrateLegacyConfigLayout();
         migrateLegacyEsperConfig();
+        migrateRayTraceBlacklist();
+        reloadModuleConfigs();
         if (messageConfig != null) {
             messageConfig.reload();
         }
         if (checkConfig != null) {
             checkConfig.reload();
         }
+        if (hideEntityService != null) {
+            hideEntityService.reload();
+        }
         this.baseTemplate = new BaseTemplateLoader(this).load();
     }
+
+    private void reloadModuleConfigs() {
+        this.antiXrayConfig = loadYamlFile("modules/antixray.yml");
+        this.antiEspConfig = loadYamlFile("modules/antiesp.yml");
+        this.antiFreeCamConfig = loadYamlFile("modules/antifreecam.yml");
+        this.playerRaytraceConfig = loadYamlFile("modules/player-raytrace.yml");
+        this.guiConfig = loadYamlFile("guis.yml");
+    }
+
+    private FileConfiguration loadYamlFile(String path) {
+        return YamlConfiguration.loadConfiguration(new File(getDataFolder(), path));
+    }
+
+    private void saveYamlFile(String path, FileConfiguration config) {
+        try {
+            config.save(new File(getDataFolder(), path));
+        } catch (Exception exception) {
+            getLogger().warning("Unable to save " + path + ": " + exception.getMessage());
+        }
+    }
+
+    public FileConfiguration getAntiXrayConfig() { return antiXrayConfig; }
+    public FileConfiguration getAntiEspConfig() { return antiEspConfig; }
+    public FileConfiguration getAntiFreeCamConfig() { return antiFreeCamConfig; }
+    public FileConfiguration getPlayerRaytraceConfig() { return playerRaytraceConfig; }
+    public FileConfiguration getGuiConfig() { return guiConfig; }
 
     public static VectorialLocation[] getLocations(Entity entity, VectorialLocation location) {
         World world = location.getWorld();
