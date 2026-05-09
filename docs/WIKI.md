@@ -1,25 +1,115 @@
 # MarisGuard Wiki
 
-This page is written as an actual usage reference. The goal is to explain what each part of the plugin does, where the important config lives, and which settings matter first in real server use.
+MarisGuard is a guard plugin for Paper and Folia. It combines a few different systems in one jar:
 
-## What MarisGuard currently includes
+- loading screen handling
+- raytrace anti-xray
+- AntiEsp block masking and bait checks
+- player visibility raytrace
 
-MarisGuard currently bundles four parts:
+This page stays on the practical side. It is meant to explain what the plugin does, which files matter, and what can be changed safely.
 
-- `LoadingScreenRemover`
-- `RayTraceAntiXray`
-- `MarisEsp`
-- `Player Visibility Raytrace`
+## Files
 
-`AntiFreeCam` is no longer part of the plugin. It was removed from both code and config.
+MarisGuard now uses three main config files:
 
-## What each part is for
+- `config.yml`
+- `checks.yml`
+- `message.yml`
 
-### 1. LoadingScreenRemover
+### `config.yml`
 
-This part reduces client-side loading terrain issues when players change worlds or when the server sends extra `RESPAWN` packets in sensitive cases.
+This is the main runtime config.
 
-Relevant config:
+It contains:
+
+- loading screen remover settings
+- raytrace anti-xray settings
+- AntiEsp reveal settings
+- blacklist worlds
+- storage settings
+- player visibility raytrace settings
+
+### `checks.yml`
+
+This file holds the AntiEsp check logic.
+
+Right now that mainly means the `esper` section:
+
+- punishment settings
+- bait session timing
+- auto-check rules
+- mining-related auto-check filters
+
+### `message.yml`
+
+This file holds the plugin messages.
+
+It is safe to edit message text here without touching the code.
+
+## Commands
+
+MarisGuard now exposes two commands:
+
+### `/esper`
+
+Main AntiEsp command.
+
+Usage:
+
+```text
+/esper
+/esper check <player>
+/esper reset <player>
+/esper alerts
+```
+
+What it does:
+
+- `/esper` opens the GUI
+- `/esper check <player>` starts a manual bait check
+- `/esper reset <player>` clears stored violations
+- `/esper alerts` toggles alerts for the sender
+
+Permission:
+
+```text
+antiesp.esper
+```
+
+Alerts permission:
+
+```text
+esper.alerts
+```
+
+### `/marisguard reload`
+
+Short alias:
+
+```text
+/ms reload
+```
+
+What it reloads:
+
+- `config.yml`
+- `checks.yml`
+- `message.yml`
+
+It also reapplies default keys if new entries were added in an update and reloads the in-memory AntiEsp base template.
+
+Permission:
+
+```text
+marisguard.admin
+```
+
+## Loading screen remover
+
+This part is there to reduce bad world-change behavior on the client side, especially loading terrain issues around world transfers and extra respawn packets.
+
+Main settings:
 
 ```yml
 debug: false
@@ -28,22 +118,13 @@ death-bypass-ticks: 200
 aggressive-same-environment: true
 ```
 
-Short meaning:
+In normal use these usually do not need much adjustment.
 
-- `debug`: enables debug logging. Only useful while diagnosing issues.
-- `track-ticks`: how long world-change tracking stays active.
-- `death-bypass-ticks`: keeps death respawn bypass active longer.
-- `aggressive-same-environment`: handles same-environment world changes more aggressively.
+## RayTraceAntiXray
 
-If the plugin is already stable on the server, these values usually do not need frequent changes.
+This is not a basic block obfuscator. It works by deciding whether hidden blocks should be revealed to the client based on visibility logic.
 
-### 2. RayTraceAntiXray
-
-This is the raytrace-based anti-xray system. It does not work like a basic block obfuscator. Instead, it decides which blocks should be visible to the client based on visibility and line-of-sight logic.
-
-Important: Paper anti-xray must still be enabled with `engine-mode: 1` in the Paper world config. If Paper anti-xray is disabled or set to a different mode, this part will not behave correctly.
-
-Global config:
+Main settings:
 
 ```yml
 settings:
@@ -53,58 +134,43 @@ settings:
     ray-trace-threads: 2
 ```
 
-Meaning:
-
-- `update-ticks`: update interval.
-- `ms-per-ray-trace-tick`: spacing between raytrace passes.
-- `ray-trace-threads`: worker count for raytrace tasks.
-
-If server smoothness matters more than aggressive checking, avoid raising `ray-trace-threads` without profiling first. More threads are not automatically better on Folia.
-
-Per-world config:
+Per-world settings live under:
 
 ```yml
 world-settings:
-  default:
-    anti-xray:
-      ray-trace: true
-      ray-trace-third-person: false
-      ray-trace-distance: 32.0
-      rehide-blocks: false
-      rehide-distance: .inf
-      max-ray-trace-block-count-per-chunk: 24
-      ray-trace-blocks: []
 ```
 
-Main lines to care about:
+The most important values there are:
 
-- `ray-trace`: enables or disables anti-xray in that world.
-- `ray-trace-distance`: how far raytrace visibility checks go.
-- `ray-trace-third-person`: whether third-person view points are included.
-- `max-ray-trace-block-count-per-chunk`: how many blocks are processed per chunk.
-
-If ore or hidden blocks feel too slow to reveal, the first places to inspect are:
-
+- `ray-trace`
 - `ray-trace-distance`
-- `update-ticks`
-- `ms-per-ray-trace-tick`
+- `ray-trace-third-person`
+- `max-ray-trace-block-count-per-chunk`
 
-Paper-side requirement:
+### Important Paper requirement
+
+Paper anti-xray still needs to be enabled on the server side.
+
+If Paper anti-xray is disabled, this part of MarisGuard will not work correctly.
+
+The important part is:
 
 ```yml
-anticheat:
-  anti-xray:
-    enabled: true
-    engine-mode: 1
+engine-mode: 1
 ```
 
-Exact path names can vary a bit between builds and forks, but the important part is the same: Paper anti-xray must be on, and `engine-mode` must be `1`.
+Depending on the server fork, the exact config path may differ a little, but `engine-mode` still needs to be `1`.
 
-### 3. MarisEsp
+## AntiEsp
 
-This handles masked-block reveal logic and the bait-check system used to catch ESP users.
+AntiEsp does two separate things:
 
-Main config:
+1. masks sensitive blocks from the client
+2. runs bait checks for suspected ESP users
+
+### Sensitive block masking
+
+Main settings:
 
 ```yml
 reveal-radius: 64
@@ -112,159 +178,161 @@ refresh-period-ticks: 10
 mask-material: AIR
 ```
 
-Meaning:
+The old behavior was basically a radius reveal. That is no longer how it works.
 
-- `reveal-radius`: maximum reveal distance around the player.
-- `refresh-period-ticks`: how often the reveal area refreshes.
-- `mask-material`: client-side replacement material. It is currently `AIR`.
+Now a block must satisfy both conditions:
 
-Reveal is no longer based on simple radius alone. A block now has to be inside the reveal distance and also pass a clear raytrace path from the player's eye position. In practice this makes the behavior closer to the player visibility raytrace logic instead of a plain sphere reveal.
+- it must be within the configured reveal range
+- it must pass a clear raytrace path from the player's eye position
 
-If blocks should reveal faster or more aggressively:
+That makes it behave much closer to the player visibility raytrace system.
 
-- increase `reveal-radius`
-- reduce `refresh-period-ticks`
+### Block entity handling
 
-Blacklist worlds:
+This can now be configured:
+
+```yml
+antiesp:
+  mask-block-entity-packets: true
+```
+
+If this is enabled, block entity packets for currently masked blocks are cancelled.
+
+### Sensitive block list
+
+This is now configurable too:
+
+```yml
+antiesp:
+  sensitive-blocks:
+  sensitive-suffixes:
+```
+
+That means the set of blocks treated as sensitive is no longer locked in code only.
+
+### Blacklist worlds
+
+Blacklist worlds still live in `config.yml`:
 
 ```yml
 blacklist-worlds:
-  - world_the_end
-  - spawn
-  - afk
-  - duels
 ```
 
-Worlds listed here are excluded from the anti-ESP / anti-xray logic covered by the current implementation.
+Those worlds are skipped by AntiEsp and the related masking logic.
 
-### 4. ESP auto-check
+## Esper checks
 
-This part runs bait sessions used to catch players who are actually using ESP.
+Esper is the bait-check system used to catch players who are actually using ESP.
 
-Config:
+Its settings now live in `checks.yml`.
+
+### Main options
 
 ```yml
 esper:
   enabled: true
   punishable: true
-  punishment-delay-in-seconds: 0
   max-violations: 7
   punishment-commands:
-    - 'tempban %player% 30m use esp'
-  duration-seconds: 15
-  spawn-distance: 10.5
-  forward-offset: 2.0
-  trigger-distance: 2.0
-  auto-check:
-    enabled: true
-    interval-ticks: 60
-    max-players-per-cycle: 2
-    cooldown-seconds: 90
-    max-active-sessions: 4
-    require-survival: true
-    max-y: 29
 ```
 
-The most performance-sensitive lines here are:
+### Auto-check behavior
 
-- `max-players-per-cycle`
-- `max-active-sessions`
-- `interval-ticks`
+The important part is:
 
-If the server is busy and these checks feel too aggressive, reduce concurrent sessions before changing the punishment logic.
+```yml
+esper:
+  auto-check:
+```
 
-### 5. Player Visibility Raytrace
+That section controls:
 
-This part does not touch the tablist. It only hides player entity packets client-side when all sampled visibility rays are blocked.
+- interval
+- parallel session limits
+- cooldowns
+- survival-only checks
+- Y-level gating
+- recent mining gating
+
+### Recent mining filter
+
+Auto-checks are no longer triggered just because somebody is low in the world.
+
+The plugin now keeps a recent-mining window and only considers players for auto-check if they have actually been mining recently.
+
+Relevant keys:
+
+```yml
+require-recent-mining: true
+recent-mining-window-seconds: 45
+```
+
+This is there to reduce false flags for players who are just walking through caves under `Y 29`.
+
+## Storage
+
+Violation storage supports:
+
+- `sqlite`
+- `mysql`
+
+Relevant section:
+
+```yml
+storage:
+```
+
+The Hikari pool name is now `Esper`.
+
+For most smaller setups, SQLite is fine. MySQL only becomes necessary when external database control is actually useful.
+
+## Player visibility raytrace
+
+This system hides player entity packets client-side when players are fully blocked from view.
+
+It does not touch the tablist and it does not call Bukkit hide-player methods.
 
 Config:
 
 ```yml
 player-visibility-raytrace:
-  enabled: true
-  worlds:
-    - world
-  max-distance: 24.0
-  check-period-ticks: 20
-  max-targets-per-tick: 2
-  candidate-refresh-ticks: 10
 ```
 
-Meaning:
+Main values:
 
-- `worlds`: worlds where this system is active.
-- `max-distance`: maximum range used for player visibility checks.
-- `check-period-ticks`: main check interval.
-- `max-targets-per-tick`: processing cap per tick.
-- `candidate-refresh-ticks`: how often candidate lists refresh.
+- `worlds`
+- `max-distance`
+- `check-period-ticks`
+- `max-targets-per-tick`
+- `candidate-refresh-ticks`
 
-Example: `max-distance: 24.0` means only players within 24 blocks are considered by this visibility system.
+It also respects invisibility now. If the target is invisible or `viewer.canSee(target)` is false, MarisGuard does not force that player visible through this system.
 
-This part also respects invisibility now. If the target is invisible or `viewer.canSee(target)` is false, MarisGuard does not force that player visible again through this path.
+## Startup version check
 
-## Storage
+On a successful startup, MarisGuard checks the latest GitHub release and logs one of these:
 
-ESP violation storage currently supports:
+- `You are currently using the latest version (x.x.x)`
+- `The new version has been released (x.x.x)`
+- `Unable to check for the new version.`
 
-- `sqlite`
-- `mysql`
+The message is intentionally short. It does not dump a long exception unless the code is changed to do so.
 
-Config:
+## Updating config files
 
-```yml
-storage:
-  type: sqlite
-  sqlite:
-    file: violations.db
-  mysql:
-    host: 127.0.0.1
-    port: 3306
-    database: antiesp
-    username: root
-    password: ''
-    properties: useSSL=false&characterEncoding=utf8&serverTimezone=UTC
-  pool:
-    maximum-pool-size: 4
-    minimum-idle: 1
-    connection-timeout-ms: 10000
-```
+MarisGuard now tries to merge new default keys into:
 
-For a small or medium setup, `sqlite` is usually enough. `mysql` only becomes necessary if external database control or shared storage is actually needed.
+- `config.yml`
+- `checks.yml`
+- `message.yml`
 
-## Suggested tuning
+That means when a new plugin version adds settings, existing files should pick up missing keys automatically instead of forcing a full reset.
 
-### If server smoothness is the priority
-
-- keep `ray-trace-threads: 2`
-- keep `ms-per-ray-trace-tick` relatively conservative
-- avoid pushing `max-active-sessions` too high
-- limit the worlds using `player-visibility-raytrace`
-
-### If faster detection is the priority
-
-- increase `reveal-radius`
-- reduce `refresh-period-ticks`
-- increase `player-visibility-raytrace.max-distance`
-- reduce `check-period-ticks`
-
-That comes with a clear CPU and packet cost. There is no configuration that is both aggressive and free.
-
-## Version check on startup
-
-After the plugin enables successfully, MarisGuard checks the latest GitHub release:
-
-- if the running version is current:
-  - `You are currently using the latest version (x.x.x)`
-- if a newer release exists:
-  - `The new version has been released (x.x.x)`
-- if the check fails:
-  - `Unable to check for the new version.`
-
-This check is intentionally quiet. It does not print long stack traces.
+There is also a legacy migration path for old `esper` settings that were previously stored inside `config.yml`.
 
 ## Build targets
 
-The repository is being split into a version-aware structure:
+The repository is split toward a multi-version layout:
 
 - `api/`
 - `core/`
@@ -272,7 +340,7 @@ The repository is being split into a version-aware structure:
 - `nms-v1_21/`
 - `nms-v26_1_2/`
 
-Build commands:
+Build examples:
 
 ```powershell
 ./gradlew :core:build "-PmarisTarget=paper-1.20"
@@ -280,21 +348,15 @@ Build commands:
 ./gradlew :core:build "-PmarisTarget=paper-26_1_2"
 ```
 
-Current release artifact name:
+Current release artifact:
 
 ```text
 MarisGuard-1.1.jar
 ```
 
-## Current source state
+## Where to tune first
 
-The repository already has version-specific bridges for part of the packet handling, but the migration is not finished yet. `playertrace` and part of `raytrace packet sending` already use dedicated bridges. Larger NMS-heavy sections are still being moved out of `core`.
-
-In short: the repository is on the right path, but it is not yet a fully clean multi-version split across every subsystem.
-
-## Practical config order
-
-If config tuning has to start somewhere, the most useful order is:
+If the plugin needs practical tuning, these are usually the first places to look:
 
 1. `blacklist-worlds`
 2. `world-settings.<world>.anti-xray.ray-trace`
@@ -304,4 +366,4 @@ If config tuning has to start somewhere, the most useful order is:
 6. `player-visibility-raytrace.max-distance`
 7. `esper.auto-check.*`
 
-Those are the settings that usually change runtime behavior the most.
+That is where most noticeable behavior changes come from.

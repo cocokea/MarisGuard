@@ -6,6 +6,11 @@ command:
   target-offline: '%prefix%That player is not online.'
   reset-success: '%prefix%Violations for &e%player% &fhave been reset.'
 
+guard:
+  usage: '%prefix%Use &e/marisguard reload&f.'
+  no-permission: '%prefix%You do not have permission to use this command.'
+  reload-success: '%prefix%Message and check files have been reloaded.'
+
 esper:
   disabled: '%prefix%AntiEsp checks are disabled in &echecks.yml&f.'
   blacklisted-world: '%prefix%Cannot run a check for &e%player% &fin a blacklisted world.'

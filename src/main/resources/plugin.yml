@@ -13,19 +13,19 @@ libraries:
   - org.xerial:sqlite-jdbc:3.53.0.0
   - com.mysql:mysql-connector-j:9.7.0
 commands:
-  raytraceantixray:
-    description: RayTraceAntiXray admin command.
-    usage: /raytraceantixray <reload|stats|timings>
-    permission: raytraceantixray.command.raytraceantixray
-    permission-message: You do not have permissions.
   esper:
     description: Open ESPER menu and manage ESPER checks
     usage: /esper
     permission: antiesp.esper
+  marisguard:
+    description: Reload MarisGuard message and check files.
+    usage: /marisguard reload
+    aliases: [ms]
+    permission: marisguard.admin
 permissions:
   antiesp.esper:
     default: op
   esper.alerts:
     default: op
-  raytraceantixray.command.raytraceantixray:
+  marisguard.admin:
     default: op

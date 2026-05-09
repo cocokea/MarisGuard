@@ -22,6 +22,7 @@ import com.maris7.guard.antiesp.platform.folia.FoliaPlayerRevealService;
 import com.maris7.guard.antiesp.service.AbstractPlayerRevealService;
 import com.maris7.guard.antiesp.storage.HikariViolationStorage;
 import com.maris7.guard.antiesp.storage.ViolationStorage;
+import com.maris7.guard.command.MarisGuardCommand;
 import com.maris7.guard.loadingscreenremover.Metrics;
 import com.maris7.guard.loadingscreenremover.PlayerManager;
 import com.maris7.guard.playertrace.NoopPlayerVisibilityPacketBridge;
@@ -29,7 +30,6 @@ import com.maris7.guard.playertrace.PlayerVisibilityPacketBridge;
 import com.maris7.guard.playertrace.PlayerVisibilityRaytraceService;
 import com.maris7.guard.raytraceantixray.NoopRayTracePacketBridge;
 import com.maris7.guard.raytraceantixray.antixray.ChunkPacketBlockControllerAntiXray;
-import com.maris7.guard.raytraceantixray.commands.RayTraceAntiXrayTabExecutor;
 import com.maris7.guard.raytraceantixray.data.ChunkBlocks;
 import com.maris7.guard.raytraceantixray.data.ChunkPacketKey;
 import com.maris7.guard.raytraceantixray.data.PlayerData;
@@ -180,10 +180,6 @@ public final class MarisGuard extends JavaPlugin {
         }
         packetListener = new PacketListener(this);
         PacketEvents.getAPI().getEventManager().registerListener(packetListener);
-        PluginCommand command = getCommand("raytraceantixray");
-        if (command != null) {
-            command.setExecutor(new RayTraceAntiXrayTabExecutor(this));
-        }
     }
 
     private void enableAntiEsp() {
@@ -215,6 +211,12 @@ public final class MarisGuard extends JavaPlugin {
             EsperCommand executor = new EsperCommand(esperManager);
             esperCommand.setExecutor(executor);
             esperCommand.setTabCompleter(executor);
+        }
+        PluginCommand guardCommand = getCommand("marisguard");
+        if (guardCommand != null) {
+            MarisGuardCommand executor = new MarisGuardCommand(this);
+            guardCommand.setExecutor(executor);
+            guardCommand.setTabCompleter(executor);
         }
         revealService.start();
         esperManager.start();
@@ -498,6 +500,22 @@ public final class MarisGuard extends JavaPlugin {
             return false;
         }
         return true;
+    }
+
+    public void reloadRuntimeFiles() {
+        reloadConfig();
+        mergeYamlResource("config.yml");
+        reloadConfig();
+        mergeYamlResource("checks.yml");
+        mergeYamlResource("message.yml");
+        migrateLegacyEsperConfig();
+        if (messageConfig != null) {
+            messageConfig.reload();
+        }
+        if (checkConfig != null) {
+            checkConfig.reload();
+        }
+        this.baseTemplate = new BaseTemplateLoader(this).load();
     }
 
     public static VectorialLocation[] getLocations(Entity entity, VectorialLocation location) {
