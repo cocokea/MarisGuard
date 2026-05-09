@@ -1,18 +1,21 @@
-prefix: '&#FFB347AntiESP &8Â» '
+prefix: '&6AntiEsp &8| &f'
+
 command:
-  usage: '%prefix%&#FF6B6BUsage: /esper, /esper check <player>, /esper reset <player>, /esper alerts'
-  player-not-found: '%prefix%&#FF6B6BPlayer not found or offline.'
-  target-offline: '%prefix%&#FF6B6BTarget is not online.'
-  reset-success: '%prefix%&#7CFC00Reset ESPER VL for &f%player%&a.'
+  usage: '%prefix%Use &e/esper&f, &e/esper check <player>&f, &e/esper reset <player>&f, or &e/esper alerts&f.'
+  player-not-found: '%prefix%That player could not be found.'
+  target-offline: '%prefix%That player is not online.'
+  reset-success: '%prefix%Violations for &e%player% &fhave been reset.'
+
 esper:
-  disabled: '%prefix%&#FF6B6BESPER check is disabled in checks.yml.'
-  blacklisted-world: '%prefix%&#FF6B6BCannot run ESPER for &f%player% &7in a blacklisted world.'
-  create-failed: '%prefix%&#FF6B6BCould not create virtual base for &f%player%&#FF6B6B.'
-  started: '%prefix%&#7CFC00Started ESPER check for &f%player%&a.'
-  failed-alert: '&#FFD166[AntiESP] &f%player% &7failed ESPER VL [&6%current_vl%&7/&6%max_vl%&7]'
+  disabled: '%prefix%AntiEsp checks are disabled in &echecks.yml&f.'
+  blacklisted-world: '%prefix%Cannot run a check for &e%player% &fin a blacklisted world.'
+  create-failed: '%prefix%Could not create the virtual bait base for &e%player%&f.'
+  started: '%prefix%Started a check for &e%player%&f.'
+  failed-alert: '&6[AntiEsp] &e%player% &ffailed the check &8(&e%current_vl%&7/&e%max_vl%&8)'
+
 alerts:
-  no-permission: '%prefix%&#FF6B6BYou do not have permission to view ESPER alerts.'
-  enabled: '%prefix%&#7CFC00Alerts enabled.'
-  disabled: '%prefix%&#FF6B6BAlerts disabled.'
-  console-enabled: '%prefix%&#7CFC00Console alerts enabled.'
-  console-disabled: '%prefix%&#FF6B6BConsole alerts disabled.'
+  no-permission: '%prefix%You do not have permission to receive alerts.'
+  enabled: '%prefix%Alerts enabled.'
+  disabled: '%prefix%Alerts disabled.'
+  console-enabled: '%prefix%Console alerts enabled.'
+  console-disabled: '%prefix%Console alerts disabled.'

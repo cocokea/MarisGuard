@@ -3,6 +3,7 @@ package com.maris7.guard.antiesp.service;
 import org.bukkit.Material;
 
 import java.util.EnumSet;
+import java.util.LinkedHashSet;
 import java.util.Locale;
 import java.util.Set;
 
@@ -56,20 +57,35 @@ public final class SensitiveBlockMatcher {
     private SensitiveBlockMatcher() {
     }
 
+    public static Set<Material> defaultSensitiveBlocks() {
+        return new LinkedHashSet<>(EXACT);
+    }
+
+    public static Set<String> defaultSensitiveSuffixes() {
+        return Set.of(
+                "_SHULKER_BOX",
+                "_BED",
+                "_BANNER",
+                "_WALL_BANNER",
+                "_HEAD",
+                "_WALL_HEAD",
+                "_SKULL",
+                "_WALL_SKULL"
+        );
+    }
+
     public static boolean isSensitive(Material material) {
         if (EXACT.contains(material)) {
             return true;
         }
 
         final String name = material.name().toUpperCase(Locale.ROOT);
-        return name.endsWith("_SHULKER_BOX")
-                || name.endsWith("_BED")
-                || name.endsWith("_BANNER")
-                || name.endsWith("_WALL_BANNER")
-                || name.endsWith("_HEAD")
-                || name.endsWith("_WALL_HEAD")
-                || name.endsWith("_SKULL")
-                || name.endsWith("_WALL_SKULL");
+        for (String suffix : defaultSensitiveSuffixes()) {
+            if (name.endsWith(suffix)) {
+                return true;
+            }
+        }
+        return false;
     }
 }
 

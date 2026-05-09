@@ -100,6 +100,16 @@ public final class CheckConfig {
         return section == null || section.getBoolean("require-survival", true);
     }
 
+    public boolean isEsperRequireRecentMining() {
+        ConfigurationSection section = getAutoCheckSection();
+        return section == null || section.getBoolean("require-recent-mining", true);
+    }
+
+    public int getEsperRecentMiningWindowSeconds() {
+        ConfigurationSection section = getAutoCheckSection();
+        return Math.max(15, section == null ? 45 : section.getInt("recent-mining-window-seconds", 45));
+    }
+
     public boolean hasEsperMaxY() {
         ConfigurationSection section = getAutoCheckSection();
         return section != null && section.contains("max-y");

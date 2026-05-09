@@ -37,13 +37,67 @@ world-settings:
     anti-xray:
       ray-trace: false
 
-# ===== MarisEsp =====
-# Maximum distance used by MarisEsp masked-block reveal checks.
+# ===== AntiEsp =====
+# Maximum distance used by AntiEsp masked-block reveal checks.
 # Reveal now also requires a clear raytrace path to the block.
 reveal-radius: 64
 # How often masked block visibility refreshes, in ticks.
 refresh-period-ticks: 10
 mask-material: AIR
+antiesp:
+  mask-block-entity-packets: true
+  sensitive-blocks:
+    - BEACON
+    - BREWING_STAND
+    - CHEST
+    - COMMAND_BLOCK
+    - CHAIN_COMMAND_BLOCK
+    - REPEATING_COMMAND_BLOCK
+    - STRUCTURE_BLOCK
+    - COMPARATOR
+    - CONDUIT
+    - DAYLIGHT_DETECTOR
+    - DISPENSER
+    - DROPPER
+    - ENCHANTING_TABLE
+    - ENDER_CHEST
+    - END_PORTAL_FRAME
+    - FURNACE
+    - LECTERN
+    - HOPPER
+    - JUKEBOX
+    - NOTE_BLOCK
+    - REPEATER
+    - TRAPPED_CHEST
+    - CRAFTING_TABLE
+    - BARREL
+    - BELL
+    - JIGSAW
+    - BEEHIVE
+    - BEE_NEST
+    - SCULK_SENSOR
+    - CALIBRATED_SCULK_SENSOR
+    - SCULK_CATALYST
+    - SCULK_SHRIEKER
+    - CHISELED_BOOKSHELF
+    - DECORATED_POT
+    - SMOKER
+    - BLAST_FURNACE
+    - CRAFTER
+    - SPAWNER
+    - TRIAL_SPAWNER
+    - VAULT
+    - PISTON
+    - STICKY_PISTON
+  sensitive-suffixes:
+    - _SHULKER_BOX
+    - _BED
+    - _BANNER
+    - _WALL_BANNER
+    - _HEAD
+    - _WALL_HEAD
+    - _SKULL
+    - _WALL_SKULL
 
 # Worlds where anti-ESP and anti-xray behavior are disabled.
 blacklist-worlds:
@@ -68,27 +122,6 @@ storage:
     maximum-pool-size: 4
     minimum-idle: 1
     connection-timeout-ms: 10000
-
-# Automated ESP bait checks and punishment flow.
-esper:
-  enabled: true
-  punishable: true
-  punishment-delay-in-seconds: 0
-  max-violations: 7
-  punishment-commands:
-    - 'tempban %player% 30m use esp'
-  duration-seconds: 15
-  spawn-distance: 10.5
-  forward-offset: 2.0
-  trigger-distance: 2.0
-  auto-check:
-    enabled: true
-    interval-ticks: 60
-    max-players-per-cycle: 2
-    cooldown-seconds: 90
-    max-active-sessions: 4
-    require-survival: true
-    max-y: 29
 
 # ===== Player Visibility Raytrace =====
 # Hides player entity packets client-side when all sampled rays are blocked.

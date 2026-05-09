@@ -11,9 +11,11 @@ esper:
   trigger-distance: 2.0
   auto-check:
     enabled: true
-    interval-ticks: 40
-    max-players-per-cycle: 3
-    cooldown-seconds: 60
-    max-active-sessions: 8
+    interval-ticks: 60
+    max-players-per-cycle: 2
+    cooldown-seconds: 90
+    max-active-sessions: 4
     require-survival: true
+    require-recent-mining: true
+    recent-mining-window-seconds: 45
     max-y: 29

@@ -10,6 +10,7 @@ import com.maris7.guard.antiesp.storage.ViolationStorage;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -47,6 +48,7 @@ public abstract class AbstractEsperManager implements Listener {
     protected final Map<UUID, Integer> violations = new ConcurrentHashMap<>();
     private final Map<UUID, Boolean> alertsEnabled = new ConcurrentHashMap<>();
     private final Map<UUID, Long> autoCheckCooldownUntil = new ConcurrentHashMap<>();
+    private final Map<UUID, Long> recentMiningUntil = new ConcurrentHashMap<>();
     private boolean consoleAlerts = true;
 
     protected AbstractEsperManager(MarisGuard plugin) {
@@ -200,6 +202,12 @@ public abstract class AbstractEsperManager implements Listener {
         if (checkConfig.isEsperRequireSurvival()) {
             GameMode mode = player.getGameMode();
             if (mode != GameMode.SURVIVAL && mode != GameMode.ADVENTURE) {
+                return false;
+            }
+        }
+        if (checkConfig.isEsperRequireRecentMining()) {
+            long miningUntil = recentMiningUntil.getOrDefault(player.getUniqueId(), 0L);
+            if (miningUntil <= System.currentTimeMillis()) {
                 return false;
             }
         }
@@ -484,6 +492,9 @@ public abstract class AbstractEsperManager implements Listener {
     @EventHandler(ignoreCancelled = true)
     public void onBreakNearBait(BlockBreakEvent event) {
         Player player = event.getPlayer();
+        if (isMiningTriggerMaterial(event.getBlock().getType())) {
+            recentMiningUntil.put(player.getUniqueId(), System.currentTimeMillis() + (checkConfig.getEsperRecentMiningWindowSeconds() * 1000L));
+        }
         EsperSession session = activeSessions.get(player.getUniqueId());
         if (session == null) {
             return;
@@ -503,6 +514,7 @@ public abstract class AbstractEsperManager implements Listener {
     public void onQuit(PlayerQuitEvent event) {
         UUID playerId = event.getPlayer().getUniqueId();
         clearSession(playerId);
+        recentMiningUntil.remove(playerId);
         violationStorage.saveViolationsAsync(playerId, event.getPlayer().getName(), violations.getOrDefault(playerId, 0));
     }
 
@@ -530,5 +542,12 @@ public abstract class AbstractEsperManager implements Listener {
 
     public record FlaggedPlayerEntry(UUID uniqueId, String name, int violations) {
     }
-}
 
+    private boolean isMiningTriggerMaterial(Material material) {
+        String name = material.name();
+        return name.endsWith("_ORE")
+                || material == Material.ANCIENT_DEBRIS
+                || material == Material.NETHER_QUARTZ_ORE
+                || material == Material.NETHER_GOLD_ORE;
+    }
+}

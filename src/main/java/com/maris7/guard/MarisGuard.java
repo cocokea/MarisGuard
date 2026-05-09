@@ -63,6 +63,9 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.Vector;
 
 import java.io.File;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.Timer;
 import java.util.Locale;
 import java.util.UUID;
@@ -107,10 +110,10 @@ public final class MarisGuard extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        saveDefaultConfig();
+        ensureYamlDefaults();
         enableLoadingScreenRemover();
         enableRayTraceAntiXray();
-        enableMarisEsp();
+        enableAntiEsp();
         enablePlayerVisibilityRaytrace();
         if (isEnabled()) {
             new GitHubVersionChecker(this).checkAsync();
@@ -120,7 +123,7 @@ public final class MarisGuard extends JavaPlugin {
     @Override
     public void onDisable() {
         disablePlayerVisibilityRaytrace();
-        disableMarisEsp();
+        disableAntiEsp();
         disableRayTraceAntiXray();
     }
 
@@ -183,10 +186,7 @@ public final class MarisGuard extends JavaPlugin {
         }
     }
 
-    private void enableMarisEsp() {
-        saveBundledResource("checks.yml");
-        saveBundledResource("message.yml");
-        saveBundledResource("base.yml");
+    private void enableAntiEsp() {
         this.messageConfig = new MessageConfig(this);
         this.checkConfig = new CheckConfig(this);
         this.baseTemplate = new BaseTemplateLoader(this).load();
@@ -280,7 +280,7 @@ public final class MarisGuard extends JavaPlugin {
         return new NoopRayTracePacketBridge();
     }
 
-    private void disableMarisEsp() {
+    private void disableAntiEsp() {
         if (esperManager != null) esperManager.stop();
         if (revealService != null) revealService.stop();
         if (violationStorage != null) violationStorage.stop();
@@ -337,9 +337,54 @@ public final class MarisGuard extends JavaPlugin {
         }
     }
 
-    private void saveBundledResource(String name) {
-        if (!new File(getDataFolder(), name).exists()) {
+    private void ensureYamlDefaults() {
+        saveDefaultConfig();
+        mergeYamlResource("config.yml");
+        reloadConfig();
+        mergeYamlResource("checks.yml");
+        mergeYamlResource("message.yml");
+        migrateLegacyEsperConfig();
+    }
+
+    private void mergeYamlResource(String name) {
+        File file = new File(getDataFolder(), name);
+        if (!file.exists()) {
             saveResource(name, false);
+            return;
+        }
+
+        try (InputStream resource = getResource(name)) {
+            if (resource == null) {
+                return;
+            }
+
+            org.bukkit.configuration.file.YamlConfiguration current = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(file);
+            org.bukkit.configuration.file.YamlConfiguration defaults = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(new InputStreamReader(resource, StandardCharsets.UTF_8));
+            current.setDefaults(defaults);
+            current.options().copyDefaults(true);
+            current.save(file);
+        } catch (Exception exception) {
+            getLogger().warning("Unable to merge defaults for " + name + ": " + exception.getMessage());
+        }
+    }
+
+    private void migrateLegacyEsperConfig() {
+        org.bukkit.configuration.ConfigurationSection legacyEsper = getConfig().getConfigurationSection("esper");
+        if (legacyEsper == null) {
+            return;
+        }
+
+        File checksFile = new File(getDataFolder(), "checks.yml");
+        org.bukkit.configuration.file.YamlConfiguration checks = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(checksFile);
+        if (checks.getConfigurationSection("esper") != null) {
+            return;
+        }
+
+        checks.createSection("esper", legacyEsper.getValues(true));
+        try {
+            checks.save(checksFile);
+        } catch (Exception exception) {
+            getLogger().warning("Unable to migrate legacy esper settings into checks.yml: " + exception.getMessage());
         }
     }
 

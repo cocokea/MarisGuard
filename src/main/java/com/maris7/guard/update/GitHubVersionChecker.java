@@ -2,6 +2,7 @@ package com.maris7.guard.update;
 
 import com.maris7.guard.MarisGuard;
 import com.maris7.guard.antiesp.util.ColorUtil;
+import net.md_5.bungee.api.ChatColor;
 
 import java.io.IOException;
 import java.net.URI;
@@ -56,11 +57,11 @@ public final class GitHubVersionChecker {
             latestVersion = normalizeVersion(latestVersion);
 
             if (compareVersions(currentVersion, latestVersion) >= 0) {
-                plugin.getLogger().info(ColorUtil.colorize("&fYou are currently using the latest version (&a" + currentVersion + "&f)"));
+                plugin.getLogger().info(ChatColor.stripColor(ColorUtil.colorize("&fYou are currently using the latest version (&a" + currentVersion + "&f)")));
                 return;
             }
 
-            plugin.getLogger().info(ColorUtil.colorize("&fThe new version has been released (&a" + latestVersion + "&f)"));
+            plugin.getLogger().info(ChatColor.stripColor(ColorUtil.colorize("&fThe new version has been released (&a" + latestVersion + "&f)")));
         } catch (InterruptedException exception) {
             Thread.currentThread().interrupt();
             warn();

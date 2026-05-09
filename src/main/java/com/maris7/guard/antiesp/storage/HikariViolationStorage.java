@@ -32,7 +32,7 @@ public final class HikariViolationStorage implements ViolationStorage {
         this.storageType = config.getString("storage.type", "sqlite").toLowerCase(Locale.ROOT);
 
         HikariConfig hikari = new HikariConfig();
-        hikari.setPoolName("AntiESP-Hikari");
+        hikari.setPoolName("Esper");
         hikari.setMaximumPoolSize(Math.max(2, config.getInt("storage.pool.maximum-pool-size", 4)));
         hikari.setMinimumIdle(Math.max(1, config.getInt("storage.pool.minimum-idle", 1)));
         hikari.setConnectionTimeout(Math.max(2500L, config.getLong("storage.pool.connection-timeout-ms", 10000L)));
@@ -52,12 +52,12 @@ public final class HikariViolationStorage implements ViolationStorage {
             hikari.setJdbcUrl("jdbc:sqlite:" + dbFile.getAbsolutePath());
             hikari.setDriverClassName("org.sqlite.JDBC");
             hikari.setMaximumPoolSize(1);
-            plugin.getLogger().warning("AntiESP violation storage is using SQLite with a single Hikari connection; MySQL is recommended for busy servers.");
+            plugin.getLogger().warning("Esper violation storage is using SQLite with a single Hikari connection; MySQL is recommended for busy servers.");
         }
 
         this.dataSource = new HikariDataSource(hikari);
         this.executor = Executors.newSingleThreadExecutor(runnable -> {
-            Thread thread = new Thread(runnable, "AntiESP-VL-Save");
+            Thread thread = new Thread(runnable, "Esper-VL-Save");
             thread.setDaemon(true);
             return thread;
         });
@@ -134,4 +134,3 @@ public final class HikariViolationStorage implements ViolationStorage {
         }
     }
 }
-
