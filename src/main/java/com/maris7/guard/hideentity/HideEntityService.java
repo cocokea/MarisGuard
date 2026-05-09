@@ -58,21 +58,32 @@ public final class HideEntityService {
     }
 
     private void tick() {
-        if (!config.getBoolean("enabled", true)) {
-            restoreAll();
+        for (Player viewer : Bukkit.getOnlinePlayers()) {
+            runForViewer(viewer, () -> processViewer(viewer));
+        }
+    }
+
+    private void processViewer(Player viewer) {
+        if (!viewer.isOnline()) {
             return;
         }
-
-        for (Player viewer : Bukkit.getOnlinePlayers()) {
-            if (!viewer.isOnline()) {
-                continue;
-            }
-            if (!isEnabledFor(viewer)) {
-                restore(viewer);
-                continue;
-            }
-            update(viewer);
+        if (!config.getBoolean("enabled", true)) {
+            restore(viewer);
+            return;
         }
+        if (!isEnabledFor(viewer)) {
+            restore(viewer);
+            return;
+        }
+        update(viewer);
+    }
+
+    private void runForViewer(Player viewer, Runnable runnable) {
+        if (plugin.isFolia()) {
+            viewer.getScheduler().run(plugin, ignored -> runnable.run(), null);
+            return;
+        }
+        runnable.run();
     }
 
     private boolean isEnabledFor(Player viewer) {
@@ -129,7 +140,7 @@ public final class HideEntityService {
 
     private void restoreAll() {
         for (Player viewer : Bukkit.getOnlinePlayers()) {
-            restore(viewer);
+            runForViewer(viewer, () -> restore(viewer));
         }
     }
 

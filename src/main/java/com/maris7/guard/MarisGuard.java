@@ -25,6 +25,7 @@ import com.maris7.guard.antiesp.storage.HikariViolationStorage;
 import com.maris7.guard.antiesp.storage.ViolationStorage;
 import com.maris7.guard.command.MarisGuardCommand;
 import com.maris7.guard.hideentity.HideEntityService;
+import com.maris7.guard.entity.DuplicateEntityUuidGuard;
 import com.maris7.guard.loadingscreenremover.Metrics;
 import com.maris7.guard.loadingscreenremover.PlayerManager;
 import com.maris7.guard.playertrace.NoopPlayerVisibilityPacketBridge;
@@ -128,6 +129,7 @@ public final class MarisGuard extends JavaPlugin {
     @Override
     public void onEnable() {
         ensureYamlDefaults();
+        getServer().getPluginManager().registerEvents(new DuplicateEntityUuidGuard(this), this);
         enableLoadingScreenRemover();
         enableRayTraceAntiXray();
         enableAntiEsp();
