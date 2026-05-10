@@ -123,6 +123,9 @@ public final class MaskedChunkPacketListener extends PacketListenerAbstract {
                         }
 
                         final int worldX = baseX + x;
+                        if (revealService.isVirtualBlockBypassed(player, worldX, worldY, worldZ)) {
+                            continue;
+                        }
                         final boolean shouldMask = !revealService.isBlockRevealedToClient(player, worldX, worldY, worldZ)
                                 && !isWithinRevealRadius(playerLocation, worldX, worldY, worldZ);
 
@@ -179,6 +182,9 @@ public final class MaskedChunkPacketListener extends PacketListenerAbstract {
         if (revealService.consumeBypassOutgoingBlockChange(player, pos.x, pos.y, pos.z)) {
             return;
         }
+        if (revealService.isVirtualBlockBypassed(player, pos.x, pos.y, pos.z)) {
+            return;
+        }
 
         final CachedBlockState cachedState = getCachedState(state);
         if (!cachedState.sensitive()) {
@@ -227,6 +233,9 @@ public final class MaskedChunkPacketListener extends PacketListenerAbstract {
             if (revealService.consumeBypassOutgoingBlockChange(player, x, y, z)) {
                 continue;
             }
+            if (revealService.isVirtualBlockBypassed(player, x, y, z)) {
+                continue;
+            }
 
             final CachedBlockState cachedState = getCachedState(block.getBlockState(event.getUser().getClientVersion()));
             if (!cachedState.sensitive()) {
@@ -266,6 +275,10 @@ public final class MaskedChunkPacketListener extends PacketListenerAbstract {
         final WrapperPlayServerBlockEntityData wrapper = new WrapperPlayServerBlockEntityData(event);
         final Vector3i pos = wrapper.getPosition();
         if (pos == null) {
+            return;
+        }
+
+        if (revealService.isVirtualBlockBypassed(player, pos.x, pos.y, pos.z)) {
             return;
         }
 

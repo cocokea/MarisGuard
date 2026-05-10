@@ -426,6 +426,9 @@ public abstract class AbstractEsperManager implements Listener {
             return;
         }
         for (BaitBlock baitBlock : session.baitBlocks()) {
+            plugin.getRevealService().addVirtualBlockBypass(player, baitBlock.x(), baitBlock.y(), baitBlock.z());
+            plugin.getRevealService().markBypassOutgoingBlockChange(player, baitBlock.x(), baitBlock.y(), baitBlock.z());
+            plugin.getRevealService().markTimedBypassOutgoingBlockChange(player, baitBlock.x(), baitBlock.y(), baitBlock.z(), 10L);
             player.sendBlockChange(new Location(world, baitBlock.x(), baitBlock.y(), baitBlock.z()), baitBlock.fakeBlockData());
         }
     }
@@ -436,6 +439,9 @@ public abstract class AbstractEsperManager implements Listener {
             return;
         }
         for (BaitBlock baitBlock : session.baitBlocks()) {
+            plugin.getRevealService().removeVirtualBlockBypass(player, baitBlock.x(), baitBlock.y(), baitBlock.z());
+            plugin.getRevealService().markBypassOutgoingBlockChange(player, baitBlock.x(), baitBlock.y(), baitBlock.z());
+            plugin.getRevealService().markTimedBypassOutgoingBlockChange(player, baitBlock.x(), baitBlock.y(), baitBlock.z(), 10L);
             player.sendBlockChange(new Location(world, baitBlock.x(), baitBlock.y(), baitBlock.z()), baitBlock.realBlockData());
         }
     }

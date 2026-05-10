@@ -56,7 +56,6 @@ public final class HideEntityService {
             Bukkit.getScheduler().cancelTask(bukkitTaskId);
             bukkitTaskId = -1;
         }
-        restoreAll();
         hiddenEntityIds.clear();
     }
 

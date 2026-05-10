@@ -15,14 +15,16 @@ public final class BaseTemplateLoader {
 
     public BaseTemplate load() {
         List<BaseTemplateBlock> blocks = new ArrayList<>();
-        add(blocks, -1, 0, 0, "minecraft:barrel[facing=up,open=false]");
-        add(blocks, 1, 0, 0, "minecraft:chest[facing=north,type=single,waterlogged=false]");
-        add(blocks, 0, 0, 2, "minecraft:ender_chest[facing=north,waterlogged=false]");
-        add(blocks, -2, 1, 1, "minecraft:spawner");
-        add(blocks, 2, 1, 1, "minecraft:trial_spawner");
-        add(blocks, 0, 1, -2, "minecraft:shulker_box[facing=up]");
-        add(blocks, -1, 1, -1, "minecraft:decorated_pot[facing=north,waterlogged=false]");
-        add(blocks, 1, 1, -1, "minecraft:beehive[facing=north,honey_level=5]");
+        add(blocks, 0, 0, 0, "minecraft:chest[facing=north,type=single,waterlogged=false]");
+        add(blocks, -2, 0, 0, "minecraft:end_portal_frame[eye=false,facing=north]");
+        add(blocks, 2, 0, 0, "minecraft:crafting_table");
+        add(blocks, 0, 0, 2, "minecraft:enchanting_table");
+        add(blocks, 0, 0, -2, "minecraft:daylight_detector[inverted=false,power=0]");
+        add(blocks, -2, 1, 1, "minecraft:comparator[facing=north,mode=compare,powered=false]");
+        add(blocks, 2, 1, 1, "minecraft:repeater[delay=1,facing=north,locked=false,powered=false]");
+        add(blocks, -2, 1, -1, "minecraft:note_block[instrument=harp,note=0,powered=false]");
+        add(blocks, 2, 1, -1, "minecraft:piston[extended=false,facing=up]");
+        add(blocks, 0, 1, 0, "minecraft:sticky_piston[extended=false,facing=up]");
 
         return new BaseTemplate(0, 0, 0, List.copyOf(blocks));
     }

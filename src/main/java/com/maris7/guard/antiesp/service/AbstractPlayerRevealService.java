@@ -41,6 +41,7 @@ public abstract class AbstractPlayerRevealService implements Listener {
     private final Map<UUID, Set<Long>> revealedByPlayer = new ConcurrentHashMap<>();
     private final Map<UUID, Set<Long>> bypassOutgoingBlockChangeByPlayer = new ConcurrentHashMap<>();
     private final Map<UUID, Map<Long, Long>> timedBypassOutgoingBlockChangeByPlayer = new ConcurrentHashMap<>();
+    private final Map<UUID, Set<Long>> virtualBlockBypassByPlayer = new ConcurrentHashMap<>();
     private final Map<UUID, String> knownWorldByPlayer = new ConcurrentHashMap<>();
     private final Map<UUID, String> trackedWorldByPlayer = new ConcurrentHashMap<>();
     private final Map<UUID, CachedPlayerLocation> cachedLocationsByPlayer = new ConcurrentHashMap<>();
@@ -150,6 +151,28 @@ public abstract class AbstractPlayerRevealService implements Listener {
             return false;
         }
         return true;
+    }
+
+    public void addVirtualBlockBypass(Player player, int x, int y, int z) {
+        virtualBlockBypassByPlayer
+                .computeIfAbsent(player.getUniqueId(), ignored -> ConcurrentHashMap.newKeySet())
+                .add(TrackedBlockState.packBlockKey(x, y, z));
+    }
+
+    public void removeVirtualBlockBypass(Player player, int x, int y, int z) {
+        Set<Long> bypass = virtualBlockBypassByPlayer.get(player.getUniqueId());
+        if (bypass == null) {
+            return;
+        }
+        bypass.remove(TrackedBlockState.packBlockKey(x, y, z));
+        if (bypass.isEmpty()) {
+            virtualBlockBypassByPlayer.remove(player.getUniqueId(), bypass);
+        }
+    }
+
+    public boolean isVirtualBlockBypassed(Player player, int x, int y, int z) {
+        Set<Long> bypass = virtualBlockBypassByPlayer.get(player.getUniqueId());
+        return bypass != null && bypass.contains(TrackedBlockState.packBlockKey(x, y, z));
     }
 
     public void upsertTrackedBlock(Player player, TrackedBlockState state) {
@@ -266,6 +289,9 @@ public abstract class AbstractPlayerRevealService implements Listener {
                     continue;
                 }
                 for (TrackedBlockState state : states.values()) {
+                    if (isVirtualBlockBypassed(player, state.x(), state.y(), state.z())) {
+                        continue;
+                    }
                     boolean shouldReveal = shouldRevealBlock(eye, world, state);
                     boolean isRevealed = revealed.contains(state.blockKey());
                     if (shouldReveal && !isRevealed) {
@@ -287,6 +313,35 @@ public abstract class AbstractPlayerRevealService implements Listener {
             revealed.remove(state.blockKey());
             markBypassOutgoingBlockChange(player, state.x(), state.y(), state.z());
             player.sendBlockChange(new Location(world, state.x(), state.y(), state.z()), state.maskedBlockData());
+        }
+
+        List<Long> staleRevealed = new ArrayList<>();
+        for (Long blockKey : revealed) {
+            long chunkKey = blockToChunkKey(blockKey);
+            int chunkX = (int) (chunkKey >> 32);
+            int chunkZ = (int) chunkKey;
+            if (Math.abs(chunkX - playerChunkX) <= chunkRadius && Math.abs(chunkZ - playerChunkZ) <= chunkRadius) {
+                continue;
+            }
+            Map<Long, TrackedBlockState> states = byChunk.get(chunkKey);
+            if (states == null) {
+                staleRevealed.add(blockKey);
+                continue;
+            }
+            TrackedBlockState state = states.get(blockKey);
+            if (state == null) {
+                staleRevealed.add(blockKey);
+                continue;
+            }
+            if (isVirtualBlockBypassed(player, state.x(), state.y(), state.z())) {
+                continue;
+            }
+            markBypassOutgoingBlockChange(player, state.x(), state.y(), state.z());
+            player.sendBlockChange(new Location(world, state.x(), state.y(), state.z()), state.maskedBlockData());
+            staleRevealed.add(blockKey);
+        }
+        if (!staleRevealed.isEmpty()) {
+            revealed.removeAll(staleRevealed);
         }
     }
 
@@ -325,6 +380,7 @@ public abstract class AbstractPlayerRevealService implements Listener {
         revealedByPlayer.remove(uuid);
         bypassOutgoingBlockChangeByPlayer.remove(uuid);
         timedBypassOutgoingBlockChangeByPlayer.remove(uuid);
+        virtualBlockBypassByPlayer.remove(uuid);
         trackedWorldByPlayer.remove(uuid);
     }
 
