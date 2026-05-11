@@ -3,10 +3,8 @@ package com.maris7.guard.antiesp.service;
 import com.maris7.guard.MarisGuard;
 import com.maris7.guard.util.WorldNameMatcher;
 import org.bukkit.Bukkit;
-import org.bukkit.FluidCollisionMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.block.Block;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -26,8 +24,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import org.bukkit.util.RayTraceResult;
-import org.bukkit.util.Vector;
 
 public abstract class AbstractPlayerRevealService implements Listener {
 
@@ -410,36 +406,7 @@ public abstract class AbstractPlayerRevealService implements Listener {
     }
 
     private boolean shouldRevealBlock(Location eyeLocation, World world, TrackedBlockState state) {
-        if (!isWithinRevealRadius(eyeLocation, state)) {
-            return false;
-        }
-
-        Vector start = eyeLocation.toVector();
-        Vector end = new Vector(state.x() + 0.5D, state.y() + 0.5D, state.z() + 0.5D);
-        Vector direction = end.clone().subtract(start);
-        double distance = direction.length();
-        if (distance <= 0.0D) {
-            return true;
-        }
-
-        direction.multiply(1.0D / distance);
-        RayTraceResult result = world.rayTraceBlocks(
-                eyeLocation,
-                direction,
-                distance + 0.25D,
-                FluidCollisionMode.NEVER,
-                true
-        );
-
-        if (result == null) {
-            return true;
-        }
-
-        Block hitBlock = result.getHitBlock();
-        return hitBlock != null
-                && hitBlock.getX() == state.x()
-                && hitBlock.getY() == state.y()
-                && hitBlock.getZ() == state.z();
+        return isWithinRevealRadius(eyeLocation, state);
     }
 
     @EventHandler(ignoreCancelled = true)
