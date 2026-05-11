@@ -14,6 +14,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
@@ -507,6 +508,23 @@ public abstract class AbstractPlayerRevealService implements Listener {
                     toWorld.getKey().toString()
             ));
         }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onMove(PlayerMoveEvent event) {
+        Location from = event.getFrom();
+        Location to = event.getTo();
+        if (to == null) {
+            return;
+        }
+        if (from.getWorld() == to.getWorld()
+                && from.getBlockX() == to.getBlockX()
+                && from.getBlockY() == to.getBlockY()
+                && from.getBlockZ() == to.getBlockZ()) {
+            return;
+        }
+
+        updateVisibility(event.getPlayer());
     }
 
     protected void handlePlayerJoin(Player player) {

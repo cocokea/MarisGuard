@@ -157,12 +157,6 @@ public final class HideEntityService {
         }
     }
 
-    private void restoreAll() {
-        for (Player viewer : Bukkit.getOnlinePlayers()) {
-            runForViewer(viewer, () -> restore(viewer));
-        }
-    }
-
     private long getRefreshTicks() {
         return Math.max(1L, config.getLong("refresh-ticks", 20L));
     }

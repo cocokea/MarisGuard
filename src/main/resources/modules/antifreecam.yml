@@ -1,5 +1,5 @@
 antifreecam:
   enabled: true
   whitelist-worlds: []
-  refresh-radius-chunks: 2
-  refresh-chunks-per-tick: 4
+  refresh-radius-chunks: 1
+  refresh-chunks-per-tick: 2

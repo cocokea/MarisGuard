@@ -17,6 +17,7 @@ import com.maris7.guard.antiesp.service.SensitiveBlockMatcher;
 import com.maris7.guard.antiesp.service.TrackedBlockState;
 import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import org.bukkit.Material;
+import org.bukkit.Location;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.Player;
 
@@ -96,7 +97,7 @@ public final class MaskedChunkPacketListener extends PacketListenerAbstract {
         final int chunkZ = column.getZ();
         final int baseX = chunkX << 4;
         final int baseZ = chunkZ << 4;
-        final AbstractPlayerRevealService.CachedPlayerLocation playerLocation = revealService.getCachedLocation(player.getUniqueId());
+        final AbstractPlayerRevealService.CachedPlayerLocation playerLocation = resolvePlayerLocation(player);
 
         final List<TrackedBlockState> trackedStates = new ArrayList<>();
         Set<Long> maskedBlockKeys = null;
@@ -192,7 +193,7 @@ public final class MaskedChunkPacketListener extends PacketListenerAbstract {
             return;
         }
 
-        final AbstractPlayerRevealService.CachedPlayerLocation playerLocation = revealService.getCachedLocation(player.getUniqueId());
+        final AbstractPlayerRevealService.CachedPlayerLocation playerLocation = resolvePlayerLocation(player);
         final boolean shouldMask = !revealService.isBlockRevealedToClient(player, pos.x, pos.y, pos.z)
                 && !isWithinRevealRadius(playerLocation, pos.x, pos.y, pos.z);
         revealService.upsertTrackedBlock(player, TrackedBlockState.create(
@@ -222,7 +223,7 @@ public final class MaskedChunkPacketListener extends PacketListenerAbstract {
             return;
         }
 
-        final AbstractPlayerRevealService.CachedPlayerLocation playerLocation = revealService.getCachedLocation(player.getUniqueId());
+        final AbstractPlayerRevealService.CachedPlayerLocation playerLocation = resolvePlayerLocation(player);
         boolean mutated = false;
 
         for (WrapperPlayServerMultiBlockChange.EncodedBlock block : blocks) {
@@ -339,6 +340,19 @@ public final class MaskedChunkPacketListener extends PacketListenerAbstract {
         final double dy = (y + 0.5D) - playerLocation.y();
         final double dz = (z + 0.5D) - playerLocation.z();
         return (dx * dx) + (dy * dy) + (dz * dz) <= revealRadiusSquared;
+    }
+
+    private AbstractPlayerRevealService.CachedPlayerLocation resolvePlayerLocation(Player player) {
+        Location location = player.getLocation();
+        if (location.getWorld() != null) {
+            return new AbstractPlayerRevealService.CachedPlayerLocation(
+                    location.getX(),
+                    location.getY(),
+                    location.getZ(),
+                    location.getWorld().getKey().toString()
+            );
+        }
+        return revealService.getCachedLocation(player.getUniqueId());
     }
 
     private record CachedBlockState(boolean sensitive, BlockData blockData) {

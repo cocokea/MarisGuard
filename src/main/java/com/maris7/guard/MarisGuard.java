@@ -6,6 +6,7 @@ import com.github.retrooper.packetevents.PacketEvents;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.maris7.guard.antifreecam.MarisFreeCamPlugin;
+import com.maris7.guard.antiseedcracker.AntiSeedCrackerPacketListener;
 import com.maris7.guard.antiesp.base.BaseTemplate;
 import com.maris7.guard.antiesp.base.BaseTemplateLoader;
 import com.maris7.guard.antiesp.command.EsperCommand;
@@ -115,9 +116,11 @@ public final class MarisGuard extends JavaPlugin {
     private RayTracePacketBridge rayTracePacketBridge;
     private MarisFreeCamPlugin freeCamPlugin;
     private HideEntityService hideEntityService;
+    private AntiSeedCrackerPacketListener antiSeedCrackerPacketListener;
     private FileConfiguration antiXrayConfig;
     private FileConfiguration antiEspConfig;
     private FileConfiguration antiFreeCamConfig;
+    private FileConfiguration antiSeedCrackerConfig;
     private FileConfiguration playerRaytraceConfig;
     private FileConfiguration guiConfig;
 
@@ -135,6 +138,7 @@ public final class MarisGuard extends JavaPlugin {
         enableAntiEsp();
         enableAntiFreeCam();
         enableHideEntity();
+        enableAntiSeedCracker();
         enablePlayerVisibilityRaytrace();
         if (isEnabled()) {
             new GitHubVersionChecker(this).checkAsync();
@@ -146,6 +150,7 @@ public final class MarisGuard extends JavaPlugin {
         disablePlayerVisibilityRaytrace();
         disableHideEntity();
         disableAntiFreeCam();
+        disableAntiSeedCracker();
         disableAntiEsp();
         disableRayTraceAntiXray();
     }
@@ -268,6 +273,18 @@ public final class MarisGuard extends JavaPlugin {
         if (freeCamPlugin != null) {
             freeCamPlugin.stop();
             freeCamPlugin = null;
+        }
+    }
+
+    private void enableAntiSeedCracker() {
+        this.antiSeedCrackerPacketListener = new AntiSeedCrackerPacketListener(this);
+        PacketEvents.getAPI().getEventManager().registerListener(antiSeedCrackerPacketListener);
+    }
+
+    private void disableAntiSeedCracker() {
+        if (antiSeedCrackerPacketListener != null) {
+            PacketEvents.getAPI().getEventManager().unregisterListener(antiSeedCrackerPacketListener);
+            antiSeedCrackerPacketListener = null;
         }
     }
 
@@ -395,9 +412,9 @@ public final class MarisGuard extends JavaPlugin {
         mergeYamlResource("modules/hideEntity.yml");
         mergeYamlResource("modules/antixray.yml");
         mergeYamlResource("modules/antifreecam.yml");
+        mergeYamlResource("modules/antiseedcracker.yml");
         mergeYamlResource("modules/antiesp.yml");
         mergeYamlResource("modules/player-raytrace.yml");
-        mergeYamlResource("modules/hideEntity.yml");
         reloadModuleConfigs();
         migrateLegacyConfigLayout();
         reloadModuleConfigs();
@@ -645,9 +662,9 @@ public final class MarisGuard extends JavaPlugin {
         mergeYamlResource("modules/hideEntity.yml");
         mergeYamlResource("modules/antixray.yml");
         mergeYamlResource("modules/antifreecam.yml");
+        mergeYamlResource("modules/antiseedcracker.yml");
         mergeYamlResource("modules/antiesp.yml");
         mergeYamlResource("modules/player-raytrace.yml");
-        mergeYamlResource("modules/hideEntity.yml");
         reloadModuleConfigs();
         migrateLegacyConfigLayout();
         migrateLegacyEsperConfig();
@@ -669,6 +686,7 @@ public final class MarisGuard extends JavaPlugin {
         this.antiXrayConfig = loadYamlFile("modules/antixray.yml");
         this.antiEspConfig = loadYamlFile("modules/antiesp.yml");
         this.antiFreeCamConfig = loadYamlFile("modules/antifreecam.yml");
+        this.antiSeedCrackerConfig = loadYamlFile("modules/antiseedcracker.yml");
         this.playerRaytraceConfig = loadYamlFile("modules/player-raytrace.yml");
         this.guiConfig = loadYamlFile("guis.yml");
     }
@@ -688,6 +706,7 @@ public final class MarisGuard extends JavaPlugin {
     public FileConfiguration getAntiXrayConfig() { return antiXrayConfig; }
     public FileConfiguration getAntiEspConfig() { return antiEspConfig; }
     public FileConfiguration getAntiFreeCamConfig() { return antiFreeCamConfig; }
+    public FileConfiguration getAntiSeedCrackerConfig() { return antiSeedCrackerConfig; }
     public FileConfiguration getPlayerRaytraceConfig() { return playerRaytraceConfig; }
     public FileConfiguration getGuiConfig() { return guiConfig; }
 

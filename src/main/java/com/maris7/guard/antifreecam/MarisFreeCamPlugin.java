@@ -105,8 +105,7 @@ public final class MarisFreeCamPlugin implements Listener {
     public void onQuit(PlayerQuitEvent event) {
         UUID uniqueId = event.getPlayer().getUniqueId();
         activeHideBelow.remove(uniqueId);
-        refreshQueue.removeIf(refresh -> refresh.playerId.equals(uniqueId));
-        queuedRefreshes.removeIf(key -> key.startsWith(uniqueId.toString() + "|"));
+        clearQueuedRefreshes(uniqueId);
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -149,9 +148,20 @@ public final class MarisFreeCamPlugin implements Listener {
 
         activeHideBelow.put(player.getUniqueId(), next);
         if (!isEnabledFor(player)) {
+            clearQueuedRefreshes(player.getUniqueId());
             return;
         }
+        if (previous != next) {
+            clearQueuedRefreshes(player.getUniqueId());
+        }
         queueNearbyRefreshes(player, next, to);
+    }
+
+    private void clearQueuedRefreshes(UUID playerId) {
+        synchronized (refreshQueue) {
+            refreshQueue.removeIf(refresh -> refresh.playerId.equals(playerId));
+        }
+        queuedRefreshes.removeIf(key -> key.startsWith(playerId.toString() + "|"));
     }
 
     private void queueNearbyRefreshes(Player player, int nextHideBelow, Location to) {

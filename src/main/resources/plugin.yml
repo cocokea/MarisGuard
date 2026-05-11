@@ -1,5 +1,5 @@
 name: MarisGuard
-version: '2.1'
+version: '2.2'
 author: maris7
 main: com.maris7.guard.MarisGuard
 api-version: '1.20'

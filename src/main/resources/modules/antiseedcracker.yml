@@ -1,0 +1,6 @@
+antiseedcracker:
+  enabled: true
+  fake-seed: 0
+  spoof-join-seed: true
+  spoof-respawn-seed: true
+  worlds: []
